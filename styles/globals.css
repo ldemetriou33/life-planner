@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-[#050505] text-white antialiased;
+    @apply bg-white text-gray-900 antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 }
@@ -18,13 +18,13 @@
   }
 
   .glass-panel {
-    @apply backdrop-blur-lg bg-white/5 border border-white/10 rounded-lg;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    @apply backdrop-blur-lg bg-white/80 border border-gray-200 rounded-lg;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
   }
 
   .glass-panel-strong {
-    @apply backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    @apply backdrop-blur-xl bg-white/90 border border-gray-300 rounded-lg;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
   }
 }
 

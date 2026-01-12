@@ -108,7 +108,7 @@ export default function AutocompleteInput({
           onKeyDown={handleKeyDown}
           className={`w-full px-4 py-3 ${
             icon ? 'pl-10' : ''
-          } bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-electric-blue focus:ring-1 focus:ring-electric-blue transition-all duration-300`}
+          } bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/20 transition-all duration-300`}
           placeholder={placeholder}
           disabled={disabled}
           autoComplete="off"
@@ -123,7 +123,7 @@ export default function AutocompleteInput({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute z-50 w-full mt-2 glass-panel border border-white/20 max-h-64 overflow-y-auto"
+            className="absolute z-50 w-full mt-2 glass-panel border border-gray-200 max-h-64 overflow-y-auto"
           >
             {filteredOptions.map((option, index) => (
               <motion.div
@@ -135,8 +135,8 @@ export default function AutocompleteInput({
                 onMouseEnter={() => setHighlightedIndex(index)}
                 className={`px-4 py-3 cursor-pointer transition-colors ${
                   highlightedIndex === index
-                    ? 'bg-electric-blue/20 text-white'
-                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                    ? 'bg-blue-100 text-gray-900'
+                    : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 {option}

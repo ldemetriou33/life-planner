@@ -138,8 +138,8 @@ export default function ResultView({ result, university, major }: ResultViewProp
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="w-full max-w-6xl mx-auto space-y-8 mt-12 backdrop-blur-xl bg-black/50 border border-white/10 rounded-lg p-8"
-      style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)' }}
+      className="w-full max-w-6xl mx-auto space-y-8 mt-12 backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-8"
+      style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
     >
       {/* University and Major Display */}
       <motion.div
@@ -147,12 +147,12 @@ export default function ResultView({ result, university, major }: ResultViewProp
           hidden: { opacity: 0, y: -20 },
           visible: { opacity: 1, y: 0 },
         }}
-        className="text-center mb-6 pb-6 border-b border-white/10"
+        className="text-center mb-6 pb-6 border-b border-gray-200"
       >
         <h2 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
           {university}
         </h2>
-        <p className="text-lg text-gray-300">
+        <p className="text-lg text-gray-700">
           {major}
         </p>
       </motion.div>
@@ -168,10 +168,10 @@ export default function ResultView({ result, university, major }: ResultViewProp
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
             }}
-            className={`backdrop-blur-xl bg-black/50 border border-white/10 rounded-lg p-6 h-full flex flex-col justify-center border-2 ${verdictStyle.border} ${verdictStyle.bg}`}
-            style={{ boxShadow: `0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 20px ${verdictStyle.shadowColor}` }}
+            className={`backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 h-full flex flex-col justify-center border-2 ${verdictStyle.border} ${verdictStyle.bg}`}
+            style={{ boxShadow: `0 8px 32px 0 rgba(0, 0, 0, 0.1), 0 0 20px ${verdictStyle.shadowColor}` }}
           >
-            <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-gray-600 mb-3 uppercase tracking-wider">
               Verdict
             </h3>
             <motion.h2
@@ -204,13 +204,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
             hidden: { opacity: 0, y: 20 },
             visible: { opacity: 1, y: 0 },
           }}
-          className="backdrop-blur-xl bg-black/50 border border-white/10 rounded-lg p-6"
-          style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)' }}
+          className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6"
+          style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
         >
           <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
             Timeline Context
           </h3>
-          <p className="text-gray-300 leading-relaxed">{result.timeline_context}</p>
+          <p className="text-gray-700 leading-relaxed">{result.timeline_context}</p>
         </motion.div>
 
         <motion.div
@@ -218,13 +218,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
             hidden: { opacity: 0, y: 20 },
             visible: { opacity: 1, y: 0 },
           }}
-          className="backdrop-blur-xl bg-black/50 border border-white/10 rounded-lg p-6 border-2 border-electric-blue/30 bg-electric-blue/5"
-          style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)' }}
+          className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-electric-blue/30 bg-blue-50"
+          style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
         >
           <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
             Pivot Strategy
           </h3>
-          <p className="text-gray-200 leading-relaxed">{result.pivot_strategy}</p>
+          <p className="text-gray-800 leading-relaxed">{result.pivot_strategy}</p>
         </motion.div>
       </div>
 
@@ -234,14 +234,14 @@ export default function ResultView({ result, university, major }: ResultViewProp
           hidden: { opacity: 0, y: 20 },
           visible: { opacity: 1, y: 0 },
         }}
-        className={`backdrop-blur-xl bg-black/50 border rounded-lg p-6 ${
+        className={`backdrop-blur-xl bg-white/90 border rounded-lg p-6 ${
           universityImpact.impact === 'positive' 
-            ? 'border-cyan-400/30 bg-cyan-400/5' 
+            ? 'border-cyan-400/30 bg-cyan-50' 
             : universityImpact.impact === 'neutral'
-            ? 'border-amber-400/30 bg-amber-400/5'
-            : 'border-white/10'
+            ? 'border-amber-400/30 bg-amber-50'
+            : 'border-gray-200'
         }`}
-        style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)' }}
+        style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
       >
         <div className="flex items-start justify-between mb-4">
           <h3 className="text-xl font-semibold bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
@@ -258,18 +258,18 @@ export default function ResultView({ result, university, major }: ResultViewProp
           )}
         </div>
         
-        <p className="text-gray-300 leading-relaxed mb-4">
+        <p className="text-gray-700 leading-relaxed mb-4">
           {universityImpact.description}
         </p>
         
         {universityImpact.benefits && (
           <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">
+            <h4 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wider">
               Key Factors:
             </h4>
             <ul className="space-y-2">
               {universityImpact.benefits.map((benefit, index) => (
-                <li key={index} className="flex items-start gap-3 text-gray-300">
+                <li key={index} className="flex items-start gap-3 text-gray-700">
                   <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                     universityImpact.impact === 'positive'
                       ? 'bg-cyan-400'
@@ -284,9 +284,9 @@ export default function ResultView({ result, university, major }: ResultViewProp
           </div>
         )}
         
-        <div className="mt-6 pt-4 border-t border-white/10">
-          <p className="text-xs text-gray-500 leading-relaxed">
-            <strong className="text-gray-400">Note:</strong> While university prestige affects initial opportunities and networking, 
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <p className="text-xs text-gray-600 leading-relaxed">
+            <strong className="text-gray-700">Note:</strong> While university prestige affects initial opportunities and networking, 
             your long-term survival in the Singularity Era depends more on developing AI-resistant skills, 
             building human relationships, and focusing on roles requiring judgment, creativity, and emotional intelligence. 
             The degree you chose ({major}) is the primary factor in determining your AI vulnerability timeline.

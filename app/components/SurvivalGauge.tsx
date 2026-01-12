@@ -69,11 +69,11 @@ export default function SurvivalGauge({ score }: SurvivalGaugeProps) {
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      className="backdrop-blur-xl bg-black/50 border border-white/10 rounded-lg p-8 relative overflow-hidden"
-      style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)' }}
+      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-8 relative overflow-hidden"
+      style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
     >
       <div className="relative z-10">
-        <h3 className="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">
+        <h3 className="text-sm font-medium text-gray-600 mb-4 uppercase tracking-wider">
           Singularity Survival Score
         </h3>
         
@@ -85,7 +85,7 @@ export default function SurvivalGauge({ score }: SurvivalGaugeProps) {
               cx="100"
               cy="100"
               r="90"
-              stroke="rgba(255, 255, 255, 0.1)"
+              stroke="rgba(0, 0, 0, 0.1)"
               strokeWidth="8"
               fill="none"
             />

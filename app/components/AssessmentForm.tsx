@@ -71,7 +71,7 @@ export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormPr
     >
       <div className="glass-panel p-8 space-y-6">
         <div className="space-y-2">
-          <label htmlFor="university" className="flex items-center gap-2 text-sm font-medium text-gray-300">
+          <label htmlFor="university" className="flex items-center gap-2 text-sm font-medium text-gray-700">
             <GraduationCap className="w-4 h-4 text-electric-blue" />
             University
           </label>
@@ -91,7 +91,7 @@ export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormPr
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="major" className="flex items-center gap-2 text-sm font-medium text-gray-300">
+          <label htmlFor="major" className="flex items-center gap-2 text-sm font-medium text-gray-700">
             <BookOpen className="w-4 h-4 text-neon-purple" />
             Major
           </label>

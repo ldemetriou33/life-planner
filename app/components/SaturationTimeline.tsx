@@ -1,7 +1,6 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Skull } from 'lucide-react'
 
 interface SaturationTimelineProps {
   saturationYear: number
@@ -74,8 +73,8 @@ export default function SaturationTimeline({ saturationYear }: SaturationTimelin
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="backdrop-blur-xl bg-black/50 border border-white/10 rounded-lg p-6"
-      style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)' }}
+      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6"
+      style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
     >
       <h3 className="text-xl font-semibold mb-6 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
         Extinction Timeline (2026-2050)
@@ -83,9 +82,9 @@ export default function SaturationTimeline({ saturationYear }: SaturationTimelin
 
       <div className="relative">
         {/* Timeline bar container */}
-        <div className="relative h-20 bg-white/5 rounded-full border border-white/10 overflow-hidden">
+        <div className="relative h-20 bg-gray-100 rounded-full border border-gray-300 overflow-hidden">
           {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-white/10 to-white/5" />
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50" />
           
           {/* Progress fill */}
           <motion.div
@@ -107,41 +106,17 @@ export default function SaturationTimeline({ saturationYear }: SaturationTimelin
                 className="absolute top-1/2 -translate-y-1/2 z-15"
                 style={{ left: `${phasePosition}%`, transform: 'translateX(-50%)' }}
               >
-                <div className="w-1 h-6 bg-white/30" />
-                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-[10px] text-gray-400 font-medium whitespace-nowrap">
+                <div className="w-1 h-6 bg-gray-400" />
+                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-[10px] text-gray-600 font-medium whitespace-nowrap">
                   {phase.label}
                 </div>
               </div>
             )
           })}
 
-          {/* Death Skull at saturation year */}
-          <motion.div
-            className="absolute z-20"
-            style={{ 
-              left: `${progressPercentage}%`, 
-              top: '50%',
-              transform: 'translate(-50%, -50%)'
-            }}
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 1, type: 'spring', stiffness: 200 }}
-          >
-            <Skull 
-              className={`w-8 h-8 ${colorClass.text}`} 
-              style={{ 
-                filter: isImmediateThreat 
-                  ? 'drop-shadow(0 0 15px rgba(239, 68, 68, 1))' 
-                  : isMidTermThreat
-                  ? 'drop-shadow(0 0 15px rgba(251, 146, 60, 1))'
-                  : 'drop-shadow(0 0 15px rgba(34, 197, 94, 1))'
-              }} 
-            />
-          </motion.div>
-
           {/* Current year marker */}
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-electric-blue rounded-full border-2 border-white z-10" />
-          <div className="absolute left-0 top-full mt-2 text-xs text-gray-400 font-medium">
+          <div className="absolute left-0 top-full mt-2 text-xs text-gray-600 font-medium">
             {currentYear} (Now)
           </div>
 
@@ -194,7 +169,7 @@ export default function SaturationTimeline({ saturationYear }: SaturationTimelin
             return (
               <div
                 key={year}
-                className="absolute text-xs text-gray-500 font-medium"
+                className="absolute text-xs text-gray-600 font-medium"
                 style={{ left: `${yearPosition}%`, transform: 'translateX(-50%)' }}
               >
                 {year}

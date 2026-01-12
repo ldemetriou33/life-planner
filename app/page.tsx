@@ -84,14 +84,14 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#050505] px-4 py-12 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white px-4 py-12 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-5xl sm:text-6xl font-bold mb-4 bg-gradient-to-r from-electric-blue via-neon-purple to-electric-blue bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
             Reality Check
           </h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Singularity Era career assessment based on Moravec's Paradox - Will AI replace you?
           </p>
         </div>
@@ -117,7 +117,7 @@ export default function Home() {
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                 className="w-16 h-16 border-4 border-electric-blue border-t-transparent rounded-full mx-auto mb-4"
               />
-              <p className="text-gray-400">Analyzing singularity risk...</p>
+              <p className="text-gray-600">Analyzing singularity risk...</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -135,7 +135,7 @@ export default function Home() {
                 <h3 className="text-lg font-semibold text-yellow-400 mb-2 flex items-center gap-2">
                   Degree Not Found
                 </h3>
-                <p className="text-gray-300 mb-4">{degreeMessage}</p>
+                <p className="text-gray-700 mb-4">{degreeMessage}</p>
                 <motion.button
                   onClick={handleRetry}
                   whileHover={{ scale: 1.05 }}
@@ -160,7 +160,7 @@ export default function Home() {
             >
               <div className="glass-panel p-6 border-red-500/30">
                 <h3 className="text-lg font-semibold text-red-400 mb-2">Error</h3>
-                <p className="text-gray-300 mb-4">{error}</p>
+                <p className="text-gray-700 mb-4">{error}</p>
                 <motion.button
                   onClick={handleRetry}
                   whileHover={{ scale: 1.05 }}
