@@ -193,17 +193,17 @@ export default function ResultView({ result, university, major }: ResultViewProp
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
             }}
-            className={`backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 h-full flex flex-col justify-center border-2 ${verdictStyle.border} ${verdictStyle.bg}`}
+            className={`backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 h-full flex flex-col justify-center border-2 ${verdictStyle.border} ${verdictStyle.bg}`}
             style={{ boxShadow: `0 8px 32px 0 rgba(0, 0, 0, 0.1), 0 0 20px ${verdictStyle.shadowColor}` }}
           >
-            <h3 className="text-sm font-medium text-gray-600 mb-3 uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-gray-600 mb-1.5 uppercase tracking-wider">
               Verdict
             </h3>
             <motion.h2
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className={`text-2xl md:text-3xl font-bold ${verdictStyle.text} leading-relaxed`}
+              className={`text-2xl md:text-3xl font-bold ${verdictStyle.text} leading-tight`}
               style={{
                 filter: `drop-shadow(0 0 10px ${verdictStyle.shadowColor})`,
                 textShadow: `0 0 20px ${verdictStyle.shadowColor}`,
