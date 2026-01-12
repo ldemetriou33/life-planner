@@ -13,6 +13,10 @@ interface SingularityResult {
   verdict: string
   pivot_strategy: string
   timeline_context: string
+  // Premium fields
+  upskillingRoadmap?: string[]
+  humanMoatTriggers?: string[]
+  recommendedTools?: Array<{ name: string; description: string; url?: string }>
 }
 
 export default function Home() {

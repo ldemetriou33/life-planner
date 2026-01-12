@@ -4,9 +4,10 @@ import { motion } from 'framer-motion'
 
 interface SaturationTimelineProps {
   saturationYear: number
+  showOnlyPhase1?: boolean // For free tier
 }
 
-export default function SaturationTimeline({ saturationYear }: SaturationTimelineProps) {
+export default function SaturationTimeline({ saturationYear, showOnlyPhase1 = false }: SaturationTimelineProps) {
   const currentYear = 2026
   const endYear = 2050
   const totalYears = endYear - currentYear
@@ -97,22 +98,24 @@ export default function SaturationTimeline({ saturationYear }: SaturationTimelin
             }}
           />
 
-          {/* Phase markers */}
-          {phases.map((phase) => {
-            const phasePosition = ((phase.year - currentYear) / totalYears) * 100
-            return (
-              <div
-                key={phase.year}
-                className="absolute top-1/2 -translate-y-1/2 z-15"
-                style={{ left: `${phasePosition}%`, transform: 'translateX(-50%)' }}
-              >
-                <div className="w-1 h-6 bg-gray-400" />
-                <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-[10px] text-gray-600 font-medium whitespace-nowrap">
-                  {phase.label}
+          {/* Phase markers - only show Phase 1 for free tier */}
+          {phases
+            .filter(phase => !showOnlyPhase1 || phase.year === 2028)
+            .map((phase) => {
+              const phasePosition = ((phase.year - currentYear) / totalYears) * 100
+              return (
+                <div
+                  key={phase.year}
+                  className="absolute top-1/2 -translate-y-1/2 z-15"
+                  style={{ left: `${phasePosition}%`, transform: 'translateX(-50%)' }}
+                >
+                  <div className="w-1 h-6 bg-gray-400" />
+                  <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-[10px] text-gray-600 font-medium whitespace-nowrap">
+                    {phase.label}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
 
           {/* Current year marker */}
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-electric-blue rounded-full border-2 border-white z-10" />
@@ -120,33 +123,35 @@ export default function SaturationTimeline({ saturationYear }: SaturationTimelin
             {currentYear} (Now)
           </div>
 
-          {/* Saturation year label - positioned above the bar */}
-          <motion.div
-            className="absolute z-20"
-            style={{ 
-              left: `${progressPercentage}%`, 
-              transform: 'translateX(-50%)', 
-              top: '-60px'
-            }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1, type: 'spring', stiffness: 200 }}
-          >
-            <div className={`text-base font-extrabold whitespace-nowrap px-3 py-1 rounded-md border-2 ${colorClass.text} ${colorClass.bg} ${colorClass.border}`} style={{
-              textShadow: isImmediateThreat
-                ? '0 0 20px rgba(252, 165, 165, 1), 0 0 30px rgba(239, 68, 68, 0.8), 0 0 40px rgba(239, 68, 68, 0.5)'
-                : isMidTermThreat
-                ? '0 0 20px rgba(254, 243, 199, 1), 0 0 30px rgba(251, 146, 60, 0.8), 0 0 40px rgba(251, 146, 60, 0.5)'
-                : '0 0 20px rgba(187, 247, 208, 1), 0 0 30px rgba(34, 197, 94, 0.8), 0 0 40px rgba(34, 197, 94, 0.5)',
-              boxShadow: isImmediateThreat
-                ? '0 0 15px rgba(239, 68, 68, 0.6), inset 0 0 10px rgba(239, 68, 68, 0.2)'
-                : isMidTermThreat
-                ? '0 0 15px rgba(251, 146, 60, 0.6), inset 0 0 10px rgba(251, 146, 60, 0.2)'
-                : '0 0 15px rgba(34, 197, 94, 0.6), inset 0 0 10px rgba(34, 197, 94, 0.2)',
-            }}>
-              {saturationYear}
-            </div>
-          </motion.div>
+          {/* Saturation year label - positioned above the bar (hidden for free tier) */}
+          {!showOnlyPhase1 && (
+            <motion.div
+              className="absolute z-20"
+              style={{ 
+                left: `${progressPercentage}%`, 
+                transform: 'translateX(-50%)', 
+                top: '-60px'
+              }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1, type: 'spring', stiffness: 200 }}
+            >
+              <div className={`text-base font-extrabold whitespace-nowrap px-3 py-1 rounded-md border-2 ${colorClass.text} ${colorClass.bg} ${colorClass.border}`} style={{
+                textShadow: isImmediateThreat
+                  ? '0 0 20px rgba(252, 165, 165, 1), 0 0 30px rgba(239, 68, 68, 0.8), 0 0 40px rgba(239, 68, 68, 0.5)'
+                  : isMidTermThreat
+                  ? '0 0 20px rgba(254, 243, 199, 1), 0 0 30px rgba(251, 146, 60, 0.8), 0 0 40px rgba(251, 146, 60, 0.5)'
+                  : '0 0 20px rgba(187, 247, 208, 1), 0 0 30px rgba(34, 197, 94, 0.8), 0 0 40px rgba(34, 197, 94, 0.5)',
+                boxShadow: isImmediateThreat
+                  ? '0 0 15px rgba(239, 68, 68, 0.6), inset 0 0 10px rgba(239, 68, 68, 0.2)'
+                  : isMidTermThreat
+                  ? '0 0 15px rgba(251, 146, 60, 0.6), inset 0 0 10px rgba(251, 146, 60, 0.2)'
+                  : '0 0 15px rgba(34, 197, 94, 0.6), inset 0 0 10px rgba(34, 197, 94, 0.2)',
+              }}>
+                {saturationYear}
+              </div>
+            </motion.div>
+          )}
 
           {/* Year interval markers */}
           {years.map((year, index) => {

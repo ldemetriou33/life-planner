@@ -91,7 +91,25 @@ export async function POST(req: Request) {
         saturation_year: 2028,
         verdict: "The Laptop Purge",
         timeline_context: "If your job happens entirely on a screen, it is already dead. AI Agents (GPT-6 class) will handle 95% of digital workflows by 2028.",
-        pivot_strategy: "Abandon 'generation' tasks. Pivot to 'Orchestration' (Managing AI fleets) or 'Physical Interface' (Hardware/Bio-tech). If you stay purely digital, you are obsolete."
+        pivot_strategy: "Abandon 'generation' tasks. Pivot to 'Orchestration' (Managing AI fleets) or 'Physical Interface' (Hardware/Bio-tech). If you stay purely digital, you are obsolete.",
+        upskillingRoadmap: [
+          "AI Orchestration & Fleet Management",
+          "Hardware/Embedded Systems Development",
+          "Human-AI Collaboration Protocols",
+          "Physical Interface Design",
+          "Bio-tech Integration Skills"
+        ],
+        humanMoatTriggers: [
+          "Physical hardware interaction",
+          "Real-time decision making in unpredictable environments",
+          "Human relationship management",
+          "Creative problem-solving requiring intuition"
+        ],
+        recommendedTools: [
+          { name: "AI Fleet Management Platforms", description: "Learn to command, not code" },
+          { name: "Embedded Systems Development", description: "Bridge digital and physical worlds" },
+          { name: "Human-AI Collaboration Frameworks", description: "Become the human in the loop" }
+        ]
       };
     }
 
@@ -104,7 +122,25 @@ export async function POST(req: Request) {
         saturation_year: 2031,
         verdict: "The Middleman Massacre",
         timeline_context: "Coordination is a math problem. Autonomous AI Agents will replace middle-management, scheduling, and logistics. Agency is the only skill left.",
-        pivot_strategy: "You must become a 'Principal' (Decision Maker) or a 'Face' (Client Relater). The 'Process' work is dead. Use your University Network to skip entry-level admin roles."
+        pivot_strategy: "You must become a 'Principal' (Decision Maker) or a 'Face' (Client Relater). The 'Process' work is dead. Use your University Network to skip entry-level admin roles.",
+        upskillingRoadmap: [
+          "Strategic Decision-Making Frameworks",
+          "High-Stakes Negotiation Skills",
+          "Client Relationship Management",
+          "Executive Leadership Training",
+          "AI Orchestration for Business"
+        ],
+        humanMoatTriggers: [
+          "High-stakes decision making under uncertainty",
+          "Complex multi-party negotiations",
+          "Building trust and long-term relationships",
+          "Strategic vision and judgment calls"
+        ],
+        recommendedTools: [
+          { name: "Strategic Decision Support Systems", description: "Augment, don't replace judgment" },
+          { name: "Relationship Management Platforms", description: "Leverage human connection" },
+          { name: "AI Orchestration Tools", description: "Command AI agents, don't compete" }
+        ]
       };
     }
 
@@ -115,16 +151,63 @@ export async function POST(req: Request) {
       // Sub-logic for Anesthesiology specific verdict
       const isAnesthes = input.match(/anesthes|anaesthes/);
       
-      data = {
-        singularity_score: 55, // Caution (High liability, but high automation)
-        human_moat: "Medium",
-        saturation_year: 2034,
-        verdict: isAnesthes ? "The Autopilot Paradox" : "The Expert Eclipse",
-        timeline_context: isAnesthes 
-          ? "Anesthesiology is 90% data monitoring and 10% physical intervention. 'Closed-Loop' AI systems will automate the monitoring loop by 2034, reducing the need for humans to 1 per 5 operating rooms (Supervisory Role)."
-          : "AI Diagnostics and Legal Discovery engines will outperform humans by 100x. Only the 'human interface' (bedside manner, courtroom persuasion) survives.",
-        pivot_strategy: "Don't just be the monitor. Focus on 'Critical Care Medicine' or 'Pain Management'—areas requiring complex human judgment and physical intervention that algorithms can't touch."
-      };
+      if (isAnesthes) {
+        // Detailed Anesthesiology premium data
+        data = {
+          singularity_score: 55, // Caution (High liability, but high automation)
+          human_moat: "Medium",
+          saturation_year: 2034,
+          verdict: "The Autopilot Paradox",
+          timeline_context: "Anesthesiology is 90% data monitoring and 10% physical intervention. 'Closed-Loop' AI systems will automate the monitoring loop by 2034, reducing the need for humans to 1 per 5 operating rooms (Supervisory Role).",
+          pivot_strategy: "Don't just be the monitor. Focus on 'Critical Care Medicine' or 'Pain Management'—areas requiring complex human judgment and physical intervention that algorithms can't touch.",
+          upskillingRoadmap: [
+            "Critical Care Medicine Certification",
+            "Pain Management Specialization",
+            "Emergency Response Protocols",
+            "Human-AI Collaboration in Surgery",
+            "Complex Multi-System Patient Management"
+          ],
+          humanMoatTriggers: [
+            "Complex multi-system patient management requiring simultaneous monitoring of cardiovascular, respiratory, and neurological systems",
+            "High-stakes decision making under uncertainty when AI systems detect anomalies",
+            "Physical intervention during complications (airway management, emergency procedures)",
+            "Emotional support for patients and families during high-risk procedures",
+            "Judgment calls when AI recommendations conflict with clinical intuition"
+          ],
+          recommendedTools: [
+            { name: "AI-Assisted Monitoring Systems", description: "Learn to supervise, not replace. Master the human oversight role" },
+            { name: "Advanced Life Support Protocols", description: "Physical skills AI cannot replicate—emergency airway management, rapid response" },
+            { name: "Critical Care Decision Support", description: "Augment judgment with AI, but maintain final authority" }
+          ]
+        };
+      } else {
+        data = {
+          singularity_score: 55, // Caution (High liability, but high automation)
+          human_moat: "Medium",
+          saturation_year: 2034,
+          verdict: "The Expert Eclipse",
+          timeline_context: "AI Diagnostics and Legal Discovery engines will outperform humans by 100x. Only the 'human interface' (bedside manner, courtroom persuasion) survives.",
+          pivot_strategy: "Don't just be the monitor. Focus on 'Critical Care Medicine' or 'Pain Management'—areas requiring complex human judgment and physical intervention that algorithms can't touch.",
+          upskillingRoadmap: [
+            "Patient Relationship Management",
+            "Complex Case Interpretation",
+            "Human-Centered Communication",
+            "Ethical Decision Making",
+            "AI-Augmented Diagnostics"
+          ],
+          humanMoatTriggers: [
+            "Building trust with patients and families",
+            "Complex ethical decision making",
+            "Persuasive communication in high-stakes situations",
+            "Interpreting nuanced human behavior"
+          ],
+          recommendedTools: [
+            { name: "AI Diagnostic Assistants", description: "Use AI for analysis, you provide judgment" },
+            { name: "Patient Communication Platforms", description: "Leverage human connection" },
+            { name: "Ethical Decision Support Systems", description: "Augment moral reasoning" }
+          ]
+        };
+      }
     }
 
     // PHASE 4: THE PHYSICAL BREACH (2035–2038)
@@ -136,7 +219,25 @@ export async function POST(req: Request) {
         saturation_year: 2037,
         verdict: "The Physical Breach",
         timeline_context: "Robotics maturity (Tesla Optimus v5) finally solves gross motor skills. Driving and basic construction become automated. Creativity is your only defense.",
-        pivot_strategy: "Pivot to creative, artistic, or highly customized work. Mass production is automated. Hand-crafted, bespoke, and creative physical work remains human."
+        pivot_strategy: "Pivot to creative, artistic, or highly customized work. Mass production is automated. Hand-crafted, bespoke, and creative physical work remains human.",
+        upskillingRoadmap: [
+          "Creative Design & Customization",
+          "Artisan Craftsmanship Techniques",
+          "Bespoke Service Delivery",
+          "Human-Centered Design",
+          "Premium Experience Creation"
+        ],
+        humanMoatTriggers: [
+          "Creative problem-solving in unpredictable environments",
+          "Customization and personalization",
+          "Artistic expression and aesthetic judgment",
+          "Building emotional connections through craft"
+        ],
+        recommendedTools: [
+          { name: "Design & Customization Software", description: "Augment creativity, not replace it" },
+          { name: "Premium Craft Tools", description: "Tools that enhance human skill" },
+          { name: "Experience Design Platforms", description: "Create memorable human experiences" }
+        ]
       };
     }
 
@@ -149,7 +250,25 @@ export async function POST(req: Request) {
         saturation_year: 2040,
         verdict: "The Moravec Firewall",
         timeline_context: "Fine motor skills in chaotic environments are the final frontier. You are safe until the robots become dexterous enough to stitch a vein or thread a pipe.",
-        pivot_strategy: "Do nothing. You are the premium asset of the 21st century. Focus on specialized, high-touch skills. The physical world is your fortress."
+        pivot_strategy: "Do nothing. You are the premium asset of the 21st century. Focus on specialized, high-touch skills. The physical world is your fortress.",
+        upskillingRoadmap: [
+          "Advanced Specialization in Niche Areas",
+          "Complex Problem-Solving in Unpredictable Environments",
+          "Patient/Client Relationship Building",
+          "Emergency Response & Crisis Management",
+          "Master-Level Craftsmanship"
+        ],
+        humanMoatTriggers: [
+          "Fine motor skills in chaotic, unpredictable environments",
+          "Real-time adaptation to unexpected complications",
+          "Building trust through physical presence and touch",
+          "Complex multi-step procedures requiring intuition"
+        ],
+        recommendedTools: [
+          { name: "Precision Tools & Equipment", description: "Enhance your physical capabilities" },
+          { name: "Emergency Response Systems", description: "Master crisis management" },
+          { name: "Patient Communication Tools", description: "Build trust and relationships" }
+        ]
       };
     }
 
@@ -162,7 +281,26 @@ export async function POST(req: Request) {
         saturation_year: 2050,
         verdict: "The Human Premium",
         timeline_context: "In a post-labor economy, we pay for 'Human Connection' and 'Biological Mastery.' You are selling the experience of being human.",
-        pivot_strategy: "Market yourself as 'Premium Human Connection.' Don't compete on volume/speed. Compete on trust, authenticity, and physical presence. You are selling the experience of being human."
+        pivot_strategy: "Market yourself as 'Premium Human Connection.' Don't compete on volume/speed. Compete on trust, authenticity, and physical presence. You are selling the experience of being human.",
+        upskillingRoadmap: [
+          "Deep Human Connection & Empathy Training",
+          "Authentic Communication & Presence",
+          "Biological Systems Mastery",
+          "Creative Expression & Artistic Development",
+          "Ethical Reasoning & Moral Philosophy"
+        ],
+        humanMoatTriggers: [
+          "Genuine emotional connection and empathy",
+          "Authentic human presence and touch",
+          "Creative expression and artistic vision",
+          "Complex moral and ethical reasoning",
+          "Nurturing and caregiving relationships"
+        ],
+        recommendedTools: [
+          { name: "Human Connection Platforms", description: "Amplify your human presence" },
+          { name: "Creative Expression Tools", description: "Enhance your artistic capabilities" },
+          { name: "Biological Systems Knowledge", description: "Master the complexity of life" }
+        ]
       };
     }
 
@@ -174,7 +312,25 @@ export async function POST(req: Request) {
         saturation_year: 2030,
         verdict: "Generic Risk",
         timeline_context: "This degree lacks a specific 'Physical' or 'High-Agency' moat. In the age of AI, 'Generalist Knowledge' is worth $0/month (Subscription cost).",
-        pivot_strategy: "Pivot immediately to a specialized trade or a high-stakes human relationship role."
+        pivot_strategy: "Pivot immediately to a specialized trade or a high-stakes human relationship role.",
+        upskillingRoadmap: [
+          "Identify Your Unique Human Advantage",
+          "Specialize in a Niche Area",
+          "Build Physical or Relationship Skills",
+          "Develop AI-Resistant Capabilities",
+          "Create Your Personal Brand"
+        ],
+        humanMoatTriggers: [
+          "Specialized knowledge in niche areas",
+          "Physical skills and dexterity",
+          "Strong human relationships",
+          "Creative problem-solving"
+        ],
+        recommendedTools: [
+          { name: "Career Pivot Assessment", description: "Identify your AI-resistant strengths" },
+          { name: "Specialization Training", description: "Develop niche expertise" },
+          { name: "Relationship Building Tools", description: "Leverage human connection" }
+        ]
       };
     }
 

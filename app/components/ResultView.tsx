@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import SurvivalGauge from './SurvivalGauge'
 import SaturationTimeline from './SaturationTimeline'
 import HumanMoatIndicator from './HumanMoatIndicator'
 import { findUniversity } from '../data/universities'
+import { Lock, Unlock } from 'lucide-react'
 
 interface SingularityResult {
   singularity_score: number
@@ -13,6 +15,10 @@ interface SingularityResult {
   verdict: string
   pivot_strategy: string
   timeline_context: string
+  // Premium fields
+  upskillingRoadmap?: string[]
+  humanMoatTriggers?: string[]
+  recommendedTools?: Array<{ name: string; description: string; url?: string }>
 }
 
 interface ResultViewProps {
@@ -22,6 +28,8 @@ interface ResultViewProps {
 }
 
 export default function ResultView({ result, university, major }: ResultViewProps) {
+  const [isPremium, setIsPremium] = useState(false)
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const foundUniversity = findUniversity(university)
   
   const containerVariants = {
@@ -133,6 +141,23 @@ export default function ResultView({ result, university, major }: ResultViewProp
 
   const verdictStyle = getVerdictStyle()
 
+  // Mock payment handler
+  const handlePayment = async () => {
+    setIsProcessingPayment(true)
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    setIsPremium(true)
+    setIsProcessingPayment(false)
+    // Scroll to premium content
+    setTimeout(() => {
+      document.getElementById('premium-content')?.scrollIntoView({ behavior: 'smooth' })
+    }, 100)
+  }
+
+  // Determine threat level for locked section styling
+  const isImmediateThreat = result.saturation_year < 2030
+  const isMidTermThreat = result.saturation_year >= 2030 && result.saturation_year <= 2038
+
   return (
     <motion.div
       variants={containerVariants}
@@ -191,108 +216,420 @@ export default function ResultView({ result, university, major }: ResultViewProp
         </div>
       </div>
 
-      {/* Human Moat and Timeline side by side */}
+      {/* Human Moat and Timeline side by side - FREE TIER */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <HumanMoatIndicator level={result.human_moat} />
-        <SaturationTimeline saturationYear={result.saturation_year} />
+        <SaturationTimeline saturationYear={result.saturation_year} showOnlyPhase1={!isPremium} />
       </div>
 
-      {/* Timeline Context and Pivot Strategy side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 20 },
-            visible: { opacity: 1, y: 0 },
-          }}
-          className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6"
-          style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
-        >
-          <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
-            Timeline Context
-          </h3>
-          <p className="text-gray-700 leading-relaxed">{result.timeline_context}</p>
-        </motion.div>
+      {/* PREMIUM CONTENT - Locked/Unlocked */}
+      <div id="premium-content" className="space-y-8">
+        {/* Premium Timeline (Full) - Only show if premium */}
+        {isPremium && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <SaturationTimeline saturationYear={result.saturation_year} showOnlyPhase1={false} />
+          </motion.div>
+        )}
 
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 20 },
-            visible: { opacity: 1, y: 0 },
-          }}
-          className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-electric-blue/30 bg-blue-50"
-          style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
-        >
-          <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
-            Pivot Strategy
-          </h3>
-          <p className="text-gray-800 leading-relaxed">{result.pivot_strategy}</p>
-        </motion.div>
-      </div>
+        {/* Timeline Context and Pivot Strategy - PREMIUM */}
+        <div className="relative overflow-hidden rounded-lg">
+          {/* Locked State Overlay */}
+          {!isPremium && (
+            <>
+              {/* Blurred Content */}
+              <div className="filter blur-sm pointer-events-none">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <motion.div
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0 },
+                    }}
+                    className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6"
+                    style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
+                  >
+                    <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+                      Timeline Context
+                    </h3>
+                    <p className="text-gray-700 leading-relaxed">{result.timeline_context}</p>
+                  </motion.div>
 
-      {/* University Impact Analysis - New Section */}
-      <motion.div
-        variants={{
-          hidden: { opacity: 0, y: 20 },
-          visible: { opacity: 1, y: 0 },
-        }}
-        className={`backdrop-blur-xl bg-white/90 border rounded-lg p-6 ${
-          universityImpact.impact === 'positive' 
-            ? 'border-cyan-400/30 bg-cyan-50' 
-            : universityImpact.impact === 'neutral'
-            ? 'border-amber-400/30 bg-amber-50'
-            : 'border-gray-200'
-        }`}
-        style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
-      >
-        <div className="flex items-start justify-between mb-4">
-          <h3 className="text-xl font-semibold bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
-            {universityImpact.title}
-          </h3>
-          {universityImpact.scoreImpact !== undefined && (
-            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-              universityImpact.impact === 'positive'
-                ? 'bg-cyan-400/20 text-cyan-300 border border-cyan-400/50'
-                : 'bg-amber-400/20 text-amber-300 border border-amber-400/50'
-            }`}>
-              {universityImpact.scoreImpact}
-            </span>
+                  <motion.div
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0 },
+                    }}
+                    className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-electric-blue/30 bg-blue-50"
+                    style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
+                  >
+                    <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+                      Pivot Strategy
+                    </h3>
+                    <p className="text-gray-800 leading-relaxed">{result.pivot_strategy}</p>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Dark Overlay */}
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-40" />
+
+              {/* Warning Border */}
+              <div className={`absolute inset-0 border-2 rounded-lg z-50 pointer-events-none ${
+                isImmediateThreat 
+                  ? 'border-red-500/50' 
+                  : isMidTermThreat 
+                  ? 'border-amber-500/50' 
+                  : 'border-orange-500/50'
+              }`} />
+
+              {/* CTA Card Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center z-50 p-4">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white/95 backdrop-blur-xl rounded-lg p-8 max-w-md w-full border-2 shadow-2xl"
+                  style={{
+                    borderColor: isImmediateThreat ? 'rgba(239, 68, 68, 0.8)' : isMidTermThreat ? 'rgba(251, 146, 60, 0.8)' : 'rgba(251, 146, 60, 0.8)',
+                    boxShadow: isImmediateThreat 
+                      ? '0 0 30px rgba(239, 68, 68, 0.6), 0 20px 60px rgba(0, 0, 0, 0.3)' 
+                      : '0 0 30px rgba(251, 146, 60, 0.6), 0 20px 60px rgba(0, 0, 0, 0.3)'
+                  }}
+                >
+                  <div className="text-center mb-6">
+                    <Lock className="w-12 h-12 mx-auto mb-4 text-gray-700" />
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                      Unlock Your Full Survival Blueprint
+                    </h3>
+                    <p className="text-gray-700 leading-relaxed">
+                      Pivot Strategies, Upskilling Roadmap, and AI-Resistant Niche Identification.
+                    </p>
+                  </div>
+                  
+                  <motion.button
+                    onClick={handlePayment}
+                    disabled={isProcessingPayment}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`w-full py-4 px-6 rounded-lg font-bold text-lg text-white transition-all ${
+                      isImmediateThreat
+                        ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
+                        : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+                    } disabled:opacity-50 disabled:cursor-not-allowed shadow-lg`}
+                    style={{
+                      boxShadow: isImmediateThreat
+                        ? '0 0 20px rgba(239, 68, 68, 0.6)'
+                        : '0 0 20px rgba(251, 146, 60, 0.6)'
+                    }}
+                  >
+                    {isProcessingPayment ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                          className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                        />
+                        Processing...
+                      </span>
+                    ) : (
+                      'Unlock for $19'
+                    )}
+                  </motion.button>
+                </motion.div>
+              </div>
+            </>
+          )}
+
+          {/* Unlocked Content */}
+          {isPremium && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+            >
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6"
+                style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
+              >
+                <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+                  Timeline Context
+                </h3>
+                <p className="text-gray-700 leading-relaxed">{result.timeline_context}</p>
+              </motion.div>
+
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-electric-blue/30 bg-blue-50"
+                style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
+              >
+                <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+                  Pivot Strategy
+                </h3>
+                <p className="text-gray-800 leading-relaxed">{result.pivot_strategy}</p>
+              </motion.div>
+            </motion.div>
           )}
         </div>
-        
-        <p className="text-gray-700 leading-relaxed mb-4">
-          {universityImpact.description}
-        </p>
-        
-        {universityImpact.benefits && (
-          <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wider">
-              Key Factors:
-            </h4>
-            <ul className="space-y-2">
-              {universityImpact.benefits.map((benefit, index) => (
-                <li key={index} className="flex items-start gap-3 text-gray-700">
-                  <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                    universityImpact.impact === 'positive'
-                      ? 'bg-cyan-400'
+
+        {/* University Impact Analysis - PREMIUM */}
+        <div className="relative overflow-hidden rounded-lg">
+          {!isPremium && (
+            <>
+              <div className="filter blur-sm pointer-events-none">
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  className={`backdrop-blur-xl bg-white/90 border rounded-lg p-6 ${
+                    universityImpact.impact === 'positive' 
+                      ? 'border-cyan-400/30 bg-cyan-50' 
                       : universityImpact.impact === 'neutral'
-                      ? 'bg-amber-400'
-                      : 'bg-gray-500'
-                  }`} />
-                  <span className="text-sm leading-relaxed">{benefit}</span>
-                </li>
-              ))}
-            </ul>
+                      ? 'border-amber-400/30 bg-amber-50'
+                      : 'border-gray-200'
+                  }`}
+                  style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-xl font-semibold bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+                      {universityImpact.title}
+                    </h3>
+                    {universityImpact.scoreImpact !== undefined && (
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                        universityImpact.impact === 'positive'
+                          ? 'bg-cyan-400/20 text-cyan-300 border border-cyan-400/50'
+                          : 'bg-amber-400/20 text-amber-300 border border-amber-400/50'
+                      }`}>
+                        {universityImpact.scoreImpact}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-gray-700 leading-relaxed mb-4">
+                    {universityImpact.description}
+                  </p>
+                </motion.div>
+              </div>
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-40" />
+              <div className={`absolute inset-0 border-2 rounded-lg z-50 pointer-events-none ${
+                isImmediateThreat 
+                  ? 'border-red-500/50' 
+                  : isMidTermThreat 
+                  ? 'border-amber-500/50' 
+                  : 'border-orange-500/50'
+              }`} />
+            </>
+          )}
+
+          {isPremium && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className={`backdrop-blur-xl bg-white/90 border rounded-lg p-6 ${
+                universityImpact.impact === 'positive' 
+                  ? 'border-cyan-400/30 bg-cyan-50' 
+                  : universityImpact.impact === 'neutral'
+                  ? 'border-amber-400/30 bg-amber-50'
+                  : 'border-gray-200'
+              }`}
+              style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+                  {universityImpact.title}
+                </h3>
+                {universityImpact.scoreImpact !== undefined && (
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                    universityImpact.impact === 'positive'
+                      ? 'bg-cyan-400/20 text-cyan-300 border border-cyan-400/50'
+                      : 'bg-amber-400/20 text-amber-300 border border-amber-400/50'
+                  }`}>
+                    {universityImpact.scoreImpact}
+                  </span>
+                )}
+              </div>
+              
+              <p className="text-gray-700 leading-relaxed mb-4">
+                {universityImpact.description}
+              </p>
+              
+              {universityImpact.benefits && (
+                <div className="mt-4 space-y-2">
+                  <h4 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wider">
+                    Key Factors:
+                  </h4>
+                  <ul className="space-y-2">
+                    {universityImpact.benefits.map((benefit, index) => (
+                      <li key={index} className="flex items-start gap-3 text-gray-700">
+                        <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                          universityImpact.impact === 'positive'
+                            ? 'bg-cyan-400'
+                            : universityImpact.impact === 'neutral'
+                            ? 'bg-amber-400'
+                            : 'bg-gray-500'
+                        }`} />
+                        <span className="text-sm leading-relaxed">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  <strong className="text-gray-700">Note:</strong> While university prestige affects initial opportunities and networking, 
+                  your long-term survival in the Singularity Era depends more on developing AI-resistant skills, 
+                  building human relationships, and focusing on roles requiring judgment, creativity, and emotional intelligence. 
+                  The degree you chose ({major}) is the primary factor in determining your AI vulnerability timeline.
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Premium Sections: Upskilling Roadmap, Human Moat Triggers, Recommended Tools */}
+        {isPremium && result.upskillingRoadmap && result.upskillingRoadmap.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            {/* Upskilling Roadmap */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-electric-blue/30"
+              style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-electric-blue to-neon-purple flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">1</span>
+                </div>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+                  Upskilling Roadmap
+                </h3>
+              </div>
+              <ul className="space-y-3">
+                {result.upskillingRoadmap.map((skill, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <span className="mt-1.5 w-2 h-2 rounded-full bg-electric-blue flex-shrink-0" />
+                    <span className="text-gray-700 text-sm leading-relaxed">{skill}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            {/* Human Moat Triggers */}
+            {result.humanMoatTriggers && result.humanMoatTriggers.length > 0 && (
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-cyan-400/30"
+                style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">2</span>
+                  </div>
+                  <h3 className="text-xl font-semibold bg-gradient-to-r from-cyan-400 to-cyan-500 bg-clip-text text-transparent">
+                    Human Moat Triggers
+                  </h3>
+                </div>
+                <ul className="space-y-3">
+                  {result.humanMoatTriggers.map((trigger, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <span className="mt-1.5 w-2 h-2 rounded-full bg-cyan-400 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm leading-relaxed">{trigger}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            )}
+
+            {/* Recommended Tools */}
+            {result.recommendedTools && result.recommendedTools.length > 0 && (
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-neon-purple/30"
+                style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-neon-purple to-purple-500 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">3</span>
+                  </div>
+                  <h3 className="text-xl font-semibold bg-gradient-to-r from-neon-purple to-purple-500 bg-clip-text text-transparent">
+                    Recommended Tools
+                  </h3>
+                </div>
+                <ul className="space-y-4">
+                  {result.recommendedTools.map((tool, index) => (
+                    <li key={index} className="border-l-2 border-neon-purple/50 pl-4">
+                      <h4 className="font-semibold text-gray-900 mb-1">{tool.name}</h4>
+                      <p className="text-gray-600 text-sm leading-relaxed">{tool.description}</p>
+                      {tool.url && (
+                        <a
+                          href={tool.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-electric-blue text-xs hover:underline mt-1 inline-block"
+                        >
+                          Learn more →
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Locked Premium Sections Placeholder */}
+        {!isPremium && (result.upskillingRoadmap || result.humanMoatTriggers || result.recommendedTools) && (
+          <div className="relative overflow-hidden rounded-lg">
+            <div className="filter blur-sm pointer-events-none">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 h-64" />
+                <div className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 h-64" />
+                <div className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 h-64" />
+              </div>
+            </div>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-40" />
+            <div className={`absolute inset-0 border-2 rounded-lg z-50 pointer-events-none ${
+              isImmediateThreat 
+                ? 'border-red-500/50' 
+                : isMidTermThreat 
+                ? 'border-amber-500/50' 
+                : 'border-orange-500/50'
+            }`} />
+            <div className="absolute inset-0 flex items-center justify-center z-50">
+              <div className="text-center">
+                <Lock className="w-8 h-8 mx-auto mb-2 text-white/80" />
+                <p className="text-white/90 font-medium">Unlock Premium Sections</p>
+              </div>
+            </div>
           </div>
         )}
-        
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <p className="text-xs text-gray-600 leading-relaxed">
-            <strong className="text-gray-700">Note:</strong> While university prestige affects initial opportunities and networking, 
-            your long-term survival in the Singularity Era depends more on developing AI-resistant skills, 
-            building human relationships, and focusing on roles requiring judgment, creativity, and emotional intelligence. 
-            The degree you chose ({major}) is the primary factor in determining your AI vulnerability timeline.
-          </p>
-        </div>
-      </motion.div>
+      </div>
     </motion.div>
   )
 }
