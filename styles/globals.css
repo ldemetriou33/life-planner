@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#050505] text-white antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+}
+
+@layer utilities {
+  .neon-glow {
+    box-shadow: 
+      0 0 20px rgba(59, 130, 246, 0.4),
+      0 0 40px rgba(139, 92, 246, 0.3),
+      0 0 60px rgba(59, 130, 246, 0.2);
+  }
+
+  .glass-panel {
+    @apply backdrop-blur-lg bg-white/5 border border-white/10 rounded-lg;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .glass-panel-strong {
+    @apply backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+}
+
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+@keyframes glitch {
+  0%, 100% {
+    transform: translate(0);
+    text-shadow: 0 0 10px currentColor;
+  }
+  10% {
+    transform: translate(-1px, 1px);
+    text-shadow: -1px 1px 10px currentColor, 1px -1px 10px currentColor;
+  }
+  20% {
+    transform: translate(-2px, 2px);
+    text-shadow: -2px 2px 10px currentColor, 2px -2px 10px currentColor;
+  }
+  30% {
+    transform: translate(-1px, -1px);
+    text-shadow: 1px 1px 10px currentColor, -1px -1px 10px currentColor;
+  }
+  40% {
+    transform: translate(-2px, -2px);
+    text-shadow: 2px 2px 10px currentColor, -2px -2px 10px currentColor;
+  }
+  50% {
+    transform: translate(1px, 1px);
+    text-shadow: -1px -1px 10px currentColor, 1px 1px 10px currentColor;
+  }
+  60% {
+    transform: translate(2px, 2px);
+    text-shadow: -2px -2px 10px currentColor, 2px 2px 10px currentColor;
+  }
+  70% {
+    transform: translate(1px, -1px);
+    text-shadow: 1px -1px 10px currentColor, -1px 1px 10px currentColor;
+  }
+  80% {
+    transform: translate(2px, -2px);
+    text-shadow: 2px -2px 10px currentColor, -2px 2px 10px currentColor;
+  }
+  90% {
+    transform: translate(0);
+    text-shadow: 0 0 10px currentColor;
+  }
+}
+
+.glitch-effect {
+  animation: glitch 0.3s infinite;
+  animation-play-state: paused;
+}
+
+.glitch-effect:hover {
+  animation-play-state: running;
+}
+
