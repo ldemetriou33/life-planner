@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Reality Check - Career Strategy',
   description: 'Get an honest assessment of your career path based on your university and major',
-  themeColor: '#050505',
+  themeColor: '#ffffff',
 }
 
 export default function RootLayout({

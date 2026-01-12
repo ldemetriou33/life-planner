@@ -155,7 +155,7 @@ export default function SaturationTimeline({ saturationYear }: SaturationTimelin
             return (
               <div
                 key={year}
-                className="absolute top-1/2 -translate-y-1/2 w-px h-4 bg-white/20"
+                className="absolute top-1/2 -translate-y-1/2 w-px h-4 bg-gray-300"
                 style={{ left: `${yearPosition}%` }}
               />
             )
