@@ -203,11 +203,11 @@ export default function ResultView({ result, university, major }: ResultViewProp
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className={`text-4xl md:text-5xl lg:text-6xl font-bold ${verdictStyle.text} leading-tight`}
+              className={`text-4xl md:text-5xl lg:text-6xl font-bold ${verdictStyle.text} leading-tight tracking-wider`}
               style={{
-                filter: `drop-shadow(0 0 10px ${verdictStyle.shadowColor})`,
-                textShadow: `0 0 20px ${verdictStyle.shadowColor}`,
-                animation: 'glitch 0.3s infinite',
+                filter: `drop-shadow(0 0 4px ${verdictStyle.shadowColor})`,
+                textShadow: `0 0 8px ${verdictStyle.shadowColor}, 0 2px 4px rgba(0, 0, 0, 0.2)`,
+                letterSpacing: '0.05em',
               }}
             >
               {result.verdict.toUpperCase()}
