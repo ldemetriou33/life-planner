@@ -18,7 +18,11 @@ function StickyPaymentBox({
   isUK, 
   paymentError, 
   onSuccess, 
-  onError 
+  onError,
+  onPasswordSubmit,
+  password,
+  setPassword,
+  passwordError
 }: {
   triggerRef: React.RefObject<HTMLDivElement>
   isImmediateThreat: boolean
@@ -27,6 +31,10 @@ function StickyPaymentBox({
   paymentError: string | null
   onSuccess: () => void
   onError: (error: string) => void
+  onPasswordSubmit: (e: React.FormEvent) => void
+  password: string
+  setPassword: (value: string) => void
+  passwordError: string | null
 }) {
   const [isSticky, setIsSticky] = useState(false)
 
@@ -60,6 +68,30 @@ function StickyPaymentBox({
             : '0 0 20px rgba(251, 146, 60, 0.4), 0 10px 30px rgba(0, 0, 0, 0.2)'
         }}
       >
+        {/* Password field for free access */}
+        <form onSubmit={onPasswordSubmit} className="mb-2">
+          <div className="flex gap-1.5 items-center">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+              }}
+              placeholder="Password"
+              className="flex-1 text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors whitespace-nowrap"
+            >
+              Unlock
+            </button>
+          </div>
+          {passwordError && (
+            <p className="text-xs text-red-600 mt-1 text-center">{passwordError}</p>
+          )}
+        </form>
+
         <div className="flex items-center justify-between mb-2">
           <div className="flex-1">
             <h3 className="text-sm font-bold text-gray-900">
@@ -103,11 +135,16 @@ interface ResultViewProps {
   major: string
 }
 
+// Password for free access
+const FREE_ACCESS_PASSWORD = process.env.NEXT_PUBLIC_FREE_ACCESS_PASSWORD || 'demo2024'
+
 export default function ResultView({ result, university, major }: ResultViewProps) {
   const [isPremium, setIsPremium] = useState(false)
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [isUK, setIsUK] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [password, setPassword] = useState('')
+  const [passwordError, setPasswordError] = useState<string | null>(null)
   const foundUniversity = findUniversity(university)
   const triggerRef = useRef<HTMLDivElement>(null)
 
@@ -258,6 +295,20 @@ export default function ResultView({ result, university, major }: ResultViewProp
     setIsProcessingPayment(false)
   }
 
+  // Handle password submission for free access
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError(null)
+    
+    if (password === FREE_ACCESS_PASSWORD) {
+      setIsPremium(true)
+      localStorage.setItem('premium_unlocked', 'true')
+      setPassword('')
+    } else {
+      setPasswordError('Incorrect password')
+    }
+  }
+
   // Determine threat level for locked section styling
   const isImmediateThreat = result.saturation_year < 2030
   const isMidTermThreat = result.saturation_year >= 2030 && result.saturation_year <= 2038
@@ -373,6 +424,33 @@ export default function ResultView({ result, university, major }: ResultViewProp
               </p>
             </div>
             
+            {/* Password field for free access */}
+            <form onSubmit={handlePasswordSubmit} className="mb-3">
+              <div className="flex gap-2 items-center">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    setPasswordError(null)
+                  }}
+                  placeholder="Enter password"
+                  className="flex-1 text-xs px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  type="submit"
+                  className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors whitespace-nowrap"
+                >
+                  Unlock
+                </button>
+              </div>
+              {passwordError && (
+                <p className="text-xs text-red-600 mt-1 text-center">{passwordError}</p>
+              )}
+            </form>
+
+            <div className="text-center text-xs text-gray-500 mb-3">or</div>
+            
             {paymentError && (
               <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-xs text-red-600 text-center">{paymentError}</p>
@@ -399,6 +477,10 @@ export default function ResultView({ result, university, major }: ResultViewProp
           paymentError={paymentError}
           onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
+          onPasswordSubmit={handlePasswordSubmit}
+          password={password}
+          setPassword={setPassword}
+          passwordError={passwordError}
         />
       )}
 
