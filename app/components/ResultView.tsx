@@ -56,7 +56,7 @@ function StickyPaymentBox({
   if (!isSticky) return null
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-3 bg-white border-t border-gray-200 shadow-lg">
+    <div className="hidden lg:block fixed bottom-0 left-0 right-0 z-50 px-4 py-3 bg-white border-t border-gray-200 shadow-lg">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -467,7 +467,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
         </div>
       )}
 
-      {/* Sticky payment box that appears after scrolling past verdict */}
+      {/* Sticky payment box - Hidden on mobile, only show on desktop */}
       {!isPremium && (
         <StickyPaymentBox
           triggerRef={triggerRef}
