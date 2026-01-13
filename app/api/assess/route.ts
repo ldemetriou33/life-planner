@@ -23,7 +23,14 @@ const schema = {
 
 export async function POST(req: Request) {
   try {
-    const { university, major } = await req.json();
+    const { email, university, major } = await req.json();
+
+    // Store email (log for now, can be extended to database/file storage)
+    if (email) {
+      console.log('User email:', email)
+      console.log('Assessment request:', { email, university, major, timestamp: new Date().toISOString() })
+      // TODO: Store email in database or file system for future use
+    }
 
     // ---------------------------------------------------------
     // STRATEGY A: REAL AI (GOOGLE GEMINI)

@@ -28,7 +28,7 @@ export default function Home() {
   const [submittedUniversity, setSubmittedUniversity] = useState<string>('')
   const [submittedMajor, setSubmittedMajor] = useState<string>('')
 
-  const handleSubmit = async (university: string, major: string) => {
+  const handleSubmit = async (email: string, university: string, major: string) => {
     setIsLoading(true)
     setError(null)
     setResults(null)
@@ -37,13 +37,16 @@ export default function Home() {
     setSubmittedUniversity(university)
     setSubmittedMajor(major)
 
+    // Store email in localStorage
+    localStorage.setItem('user_email', email)
+
     try {
       const response = await fetch('/api/assess', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ university, major }),
+        body: JSON.stringify({ email, university, major }),
       })
 
       if (!response.ok) {

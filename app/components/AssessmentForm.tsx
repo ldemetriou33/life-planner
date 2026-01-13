@@ -2,20 +2,21 @@
 
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Loader2, GraduationCap, BookOpen } from 'lucide-react'
+import { Loader2, GraduationCap, BookOpen, Mail } from 'lucide-react'
 import AutocompleteInput from './AutocompleteInput'
 import { ALL_UNIVERSITIES } from '../data/universities'
 import { DEGREES } from '../data/degrees'
 
 interface AssessmentFormProps {
-  onSubmit: (university: string, major: string) => Promise<void>
+  onSubmit: (email: string, university: string, major: string) => Promise<void>
   isLoading: boolean
 }
 
 export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormProps) {
+  const [email, setEmail] = useState('')
   const [university, setUniversity] = useState('')
   const [major, setMajor] = useState('')
-  const [errors, setErrors] = useState<{ university?: string; major?: string }>({})
+  const [errors, setErrors] = useState<{ email?: string; university?: string; major?: string }>({})
 
   // Get university and degree options for autocomplete
   const universityOptions = useMemo(() => {
@@ -42,8 +43,20 @@ export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormPr
       .map((degree) => degree.name)
   }, [])
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
   const validate = () => {
-    const newErrors: { university?: string; major?: string } = {}
+    const newErrors: { email?: string; university?: string; major?: string } = {}
+    
+    if (!email.trim()) {
+      newErrors.email = 'Email is required'
+    } else if (!validateEmail(email.trim())) {
+      newErrors.email = 'Please enter a valid email address'
+    }
+    
     if (!university.trim()) {
       newErrors.university = 'University is required'
     }
@@ -58,7 +71,7 @@ export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormPr
     e.preventDefault()
     if (!validate()) return
 
-    await onSubmit(university.trim(), major.trim())
+    await onSubmit(email.trim(), university.trim(), major.trim())
   }
 
   return (
@@ -70,6 +83,32 @@ export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormPr
       className="w-full max-w-2xl mx-auto"
     >
       <div className="glass-panel p-8 space-y-6">
+        <div className="space-y-2">
+          <label htmlFor="email" className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <Mail className="w-4 h-4 text-electric-blue" />
+            Email Address <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              if (errors.email) setErrors({ ...errors, email: undefined })
+            }}
+            placeholder="your.email@example.com"
+            disabled={isLoading}
+            className={`w-full py-3 px-4 rounded-lg border-2 transition-all ${
+              errors.email
+                ? 'border-red-500 bg-red-50'
+                : 'border-gray-300 bg-gray-100 focus:border-electric-blue focus:bg-white'
+            } text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-blue/20`}
+          />
+          {errors.email && (
+            <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+          )}
+        </div>
+
         <div className="space-y-2">
           <label htmlFor="university" className="flex items-center gap-2 text-sm font-medium text-gray-700">
             <GraduationCap className="w-4 h-4 text-electric-blue" />
