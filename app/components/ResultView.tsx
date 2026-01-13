@@ -810,7 +810,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
           <div className="flex flex-col gap-3 items-center w-full max-w-md">
             <input
               type="password"
-              placeholder="Enter password (type 'uni' to unlock)"
+              placeholder="Enter password"
               className="w-full text-base px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-electric-blue/30 focus:border-electric-blue bg-white text-gray-900 shadow-md"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
