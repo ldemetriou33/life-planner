@@ -50,7 +50,7 @@ export default function SurvivalGauge({ score }: SurvivalGaugeProps) {
 
   const getTextColor = () => {
     if (score >= 80) return 'text-cyan-400'
-    if (score >= 50) return 'text-amber-400'
+    if (score >= 50) return 'text-orange-600'
     return 'text-red-500'
   }
 
@@ -137,18 +137,18 @@ export default function SurvivalGauge({ score }: SurvivalGaugeProps) {
             score >= 80 
               ? 'bg-cyan-400/20 border-cyan-400/50' 
               : score >= 50 
-              ? 'bg-amber-400/30 border-amber-400/70' 
+              ? 'bg-orange-100 border-orange-500' 
               : 'bg-red-500/20 border-red-500/50'
           } border-2`}>
             <span className={`text-sm font-bold ${
               score >= 80 
                 ? 'text-cyan-400' 
                 : score >= 50 
-                ? 'text-amber-300' 
+                ? 'text-orange-700' 
                 : 'text-red-500'
             }`} style={{
               textShadow: score >= 50 && score < 80 
-                ? '0 0 10px rgba(251, 191, 36, 0.8), 0 0 20px rgba(251, 191, 36, 0.4)'
+                ? '0 1px 2px rgba(0, 0, 0, 0.2)'
                 : undefined
             }}>
               {score >= 80 ? 'Safe Zone' : score >= 50 ? 'Caution Zone' : 'Danger Zone'}

@@ -22,7 +22,7 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
       value: 'Medium',
       label: 'Medium',
       icon: Shield,
-      color: 'from-amber-400 to-amber-500 border-amber-400/50 bg-amber-400/20',
+      color: 'from-orange-500 to-orange-600 border-orange-500/50 bg-orange-100',
     },
     {
       value: 'Low',
@@ -85,14 +85,14 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
               level === 'High'
                 ? 'bg-gradient-to-r from-cyan-400 to-cyan-500'
                 : level === 'Medium'
-                ? 'bg-gradient-to-r from-amber-400 to-amber-500'
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600'
                 : 'bg-gradient-to-r from-red-500 to-red-600'
             }`}
             style={{
               boxShadow: level === 'High'
                 ? '0 0 20px rgba(34, 211, 238, 0.6)'
                 : level === 'Medium'
-                ? '0 0 20px rgba(251, 191, 36, 0.6)'
+                ? '0 0 20px rgba(234, 88, 12, 0.6)'
                 : '0 0 20px rgba(239, 68, 68, 0.6)',
             }}
           />
@@ -124,7 +124,7 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
               `}
               style={{
                 boxShadow: isActive
-                  ? `0 0 20px ${item.value === 'High' ? 'rgba(34, 211, 238, 0.4)' : item.value === 'Medium' ? 'rgba(251, 191, 36, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`
+                  ? `0 0 20px ${item.value === 'High' ? 'rgba(34, 211, 238, 0.4)' : item.value === 'Medium' ? 'rgba(234, 88, 12, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`
                   : undefined,
               }}
             >
@@ -135,7 +135,7 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
                       ? item.value === 'High'
                         ? 'text-cyan-400'
                         : item.value === 'Medium'
-                        ? 'text-amber-400'
+                        ? 'text-orange-600'
                         : 'text-red-500'
                       : 'text-gray-500'
                   }`}
@@ -146,7 +146,7 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
                       ? item.value === 'High'
                         ? 'text-cyan-400'
                         : item.value === 'Medium'
-                        ? 'text-amber-400'
+                        ? 'text-orange-700'
                         : 'text-red-500'
                       : 'text-gray-600'
                   }`}>
@@ -170,7 +170,7 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
                         item.value === 'High'
                           ? '#22d3ee'
                           : item.value === 'Medium'
-                          ? '#fbbf24'
+                          ? '#ea580c'
                           : '#ef4444',
                     }}
                   />

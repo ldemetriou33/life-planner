@@ -149,10 +149,10 @@ export default function ResultView({ result, university, major }: ResultViewProp
       }
     } else if (result.singularity_score >= 50) {
       return {
-        text: 'text-amber-400',
-        border: 'border-amber-400/30',
-        bg: 'bg-amber-400/10',
-        shadowColor: 'rgba(251, 191, 36, 0.5)',
+        text: 'text-orange-600',
+        border: 'border-orange-500/40',
+        bg: 'bg-orange-50',
+        shadowColor: 'rgba(234, 88, 12, 0.4)',
       }
     } else {
       return {
@@ -234,8 +234,12 @@ export default function ResultView({ result, university, major }: ResultViewProp
               transition={{ delay: 0.3, duration: 0.5 }}
               className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold ${verdictStyle.text} leading-tight tracking-wider`}
               style={{
-                filter: `drop-shadow(0 0 4px ${verdictStyle.shadowColor})`,
-                textShadow: `0 0 8px ${verdictStyle.shadowColor}, 0 2px 4px rgba(0, 0, 0, 0.2)`,
+                filter: result.singularity_score >= 50 && result.singularity_score < 80 
+                  ? `drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))`
+                  : `drop-shadow(0 0 4px ${verdictStyle.shadowColor})`,
+                textShadow: result.singularity_score >= 50 && result.singularity_score < 80
+                  ? `0 2px 4px rgba(0, 0, 0, 0.3), 0 0 8px ${verdictStyle.shadowColor}`
+                  : `0 0 8px ${verdictStyle.shadowColor}, 0 2px 4px rgba(0, 0, 0, 0.2)`,
                 letterSpacing: '0.05em',
               }}
             >
@@ -324,7 +328,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
               universityImpact.impact === 'positive' 
                 ? 'border-cyan-400/30 bg-cyan-50' 
                 : universityImpact.impact === 'neutral'
-                ? 'border-amber-400/30 bg-amber-50'
+                ? 'border-orange-400/40 bg-orange-50'
                 : 'border-gray-200'
             }`}
             style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
@@ -336,8 +340,8 @@ export default function ResultView({ result, university, major }: ResultViewProp
               {universityImpact.scoreImpact !== undefined && (
                 <span className={`text-xs font-bold px-3 py-1 rounded-full ${
                   universityImpact.impact === 'positive'
-                    ? 'bg-cyan-400/20 text-cyan-300 border border-cyan-400/50'
-                    : 'bg-amber-400/20 text-amber-300 border border-amber-400/50'
+                    ? 'bg-cyan-400/20 text-cyan-700 border border-cyan-400/50'
+                    : 'bg-orange-100 text-orange-700 border border-orange-500/50'
                 }`}>
                   {universityImpact.scoreImpact}
                 </span>
@@ -360,7 +364,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                         universityImpact.impact === 'positive'
                           ? 'bg-cyan-400'
                           : universityImpact.impact === 'neutral'
-                          ? 'bg-amber-400'
+                          ? 'bg-orange-500'
                           : 'bg-gray-500'
                       }`} />
                       <span className="text-sm leading-relaxed">{benefit}</span>
