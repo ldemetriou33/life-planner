@@ -82,7 +82,7 @@ export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormPr
       onSubmit={handleSubmit}
       className="w-full max-w-2xl mx-auto"
     >
-      <div className="glass-panel p-8 space-y-6">
+      <div className="glass-panel p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-5 md:space-y-6">
         <div className="space-y-2">
           <label htmlFor="email" className="flex items-center gap-2 text-sm font-medium text-gray-700">
             <Mail className="w-4 h-4 text-electric-blue" />
@@ -154,7 +154,7 @@ export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormPr
           disabled={isLoading}
           whileHover={{ scale: isLoading ? 1 : 1.02 }}
           whileTap={{ scale: isLoading ? 1 : 0.98 }}
-          className="w-full py-3 px-6 bg-gradient-to-r from-electric-blue to-neon-purple text-white font-semibold rounded-lg neon-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
+          className="w-full py-3 sm:py-3.5 md:py-4 px-4 sm:px-6 bg-gradient-to-r from-electric-blue to-neon-purple text-white font-semibold text-sm sm:text-base rounded-lg neon-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>

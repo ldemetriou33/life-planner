@@ -91,14 +91,14 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-white px-4 py-12 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white px-3 py-6 sm:px-4 sm:py-8 md:px-6 md:py-12 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl sm:text-6xl font-bold mb-4 bg-gradient-to-r from-electric-blue via-neon-purple to-electric-blue bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+        <div className="text-center mb-6 sm:mb-8 md:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-electric-blue via-neon-purple to-electric-blue bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
             Reality Check
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
             Singularity Era career assessment based on Moravec's Paradox - Will AI replace you?
           </p>
         </div>

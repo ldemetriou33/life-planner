@@ -69,15 +69,15 @@ export default function SurvivalGauge({ score }: SurvivalGaugeProps) {
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-8 relative overflow-hidden"
+      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-6 md:p-8 relative overflow-hidden"
       style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
     >
       <div className="relative z-10">
-        <h3 className="text-sm font-medium text-gray-600 mb-4 uppercase tracking-wider text-center">
+        <h3 className="text-xs sm:text-sm font-medium text-gray-600 mb-3 sm:mb-4 uppercase tracking-wider text-center">
           Singularity Survival Score
         </h3>
         
-        <div className="relative w-48 h-48 mx-auto mb-4">
+        <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 mx-auto mb-3 sm:mb-4">
           {/* Circular progress background - using full circle like old design */}
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
             {/* Circular progress background */}
@@ -119,7 +119,7 @@ export default function SurvivalGauge({ score }: SurvivalGaugeProps) {
               transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
             >
               <span
-                className={`text-6xl font-bold ${getTextColor()} ${getShadowColor()}`}
+                className={`text-4xl sm:text-5xl md:text-6xl font-bold ${getTextColor()} ${getShadowColor()}`}
                 style={{ 
                   filter: `drop-shadow(0 0 20px ${getGlowColor()})`,
                   textShadow: `0 0 30px ${getGlowColor()}`,

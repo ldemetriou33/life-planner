@@ -40,11 +40,11 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 relative"
+      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6 relative"
       style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <h3 className="text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
           Human Moat Level
         </h3>
         <div className="relative">

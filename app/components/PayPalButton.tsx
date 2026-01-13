@@ -92,7 +92,7 @@ function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalBut
         </div>
       )}
       
-      {/* Single PayPal Buttons component that shows all available funding sources */}
+      {/* Single PayPal Buttons component - PayPal automatically shows Apple Pay when available */}
       <PayPalButtons
         createOrder={createOrder}
         onApprove={onApprove}
@@ -102,7 +102,7 @@ function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalBut
           layout: 'vertical',
           color: 'gold',
           shape: 'rect',
-          label: 'paypal',
+          label: 'pay',
           height: 50,
           tagline: false,
         }}
@@ -132,6 +132,10 @@ export default function PayPalButton({ amount, currency, onSuccess, onError }: P
         intent: 'capture',
         enableFunding: 'paypal,card,applepay,venmo',
         components: 'buttons',
+        'data-namespace': 'paypal_sdk',
+        'data-sdk-integration-source': 'button-factory',
+        merchantId: undefined, // Let PayPal auto-detect
+        buyerCountry: undefined, // Auto-detect from user
       }}
     >
       <PayPalButtonContent 

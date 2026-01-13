@@ -192,7 +192,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="w-full max-w-6xl mx-auto space-y-8 mt-12 backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-8"
+      className="w-full max-w-6xl mx-auto space-y-4 sm:space-y-6 md:space-y-8 mt-6 sm:mt-8 md:mt-12 backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-6 md:p-8"
       style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
     >
       {/* University and Major Display */}
@@ -201,18 +201,18 @@ export default function ResultView({ result, university, major }: ResultViewProp
           hidden: { opacity: 0, y: -20 },
           visible: { opacity: 1, y: 0 },
         }}
-        className="text-center mb-6 pb-6 border-b border-gray-200"
+        className="text-center mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-gray-200"
       >
-        <h2 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
           {university}
         </h2>
-        <p className="text-lg text-gray-700">
+        <p className="text-base sm:text-lg text-gray-700">
           {major}
         </p>
       </motion.div>
 
       {/* Header: Survival Gauge and Verdict Banner - matching old layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
         <div className="lg:col-span-1">
           <SurvivalGauge score={result.singularity_score} />
         </div>
@@ -222,17 +222,17 @@ export default function ResultView({ result, university, major }: ResultViewProp
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
             }}
-            className={`backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 h-full flex flex-col justify-center border-2 ${verdictStyle.border} ${verdictStyle.bg}`}
+            className={`backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-3 sm:p-4 h-full flex flex-col justify-center border-2 ${verdictStyle.border} ${verdictStyle.bg}`}
             style={{ boxShadow: `0 8px 32px 0 rgba(0, 0, 0, 0.1), 0 0 20px ${verdictStyle.shadowColor}` }}
           >
-            <h3 className="text-lg md:text-xl font-medium text-gray-600 mb-2 uppercase tracking-wider">
+            <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-gray-600 mb-1 sm:mb-2 uppercase tracking-wider">
               Verdict
             </h3>
             <motion.h2
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className={`text-4xl md:text-5xl lg:text-6xl font-bold ${verdictStyle.text} leading-tight tracking-wider`}
+              className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold ${verdictStyle.text} leading-tight tracking-wider`}
               style={{
                 filter: `drop-shadow(0 0 4px ${verdictStyle.shadowColor})`,
                 textShadow: `0 0 8px ${verdictStyle.shadowColor}, 0 2px 4px rgba(0, 0, 0, 0.2)`,
@@ -265,9 +265,9 @@ export default function ResultView({ result, university, major }: ResultViewProp
       {/* PREMIUM CONTENT - Everything except Verdict and Score */}
       <div id="premium-content" className="relative">
         {/* All Premium Content - Blurred when locked */}
-        <div className={`space-y-8 ${!isPremium ? 'filter blur-[2px] pointer-events-none' : ''}`}>
+        <div className={`space-y-4 sm:space-y-6 md:space-y-8 ${!isPremium ? 'filter blur-[2px] pointer-events-none' : ''}`}>
           {/* Human Moat and Timeline */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
             <HumanMoatIndicator level={result.human_moat} />
             <SaturationTimeline saturationYear={result.saturation_year} showOnlyPhase1={!isPremium} />
           </div>
@@ -284,13 +284,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
           )}
 
           {/* Timeline Context and Pivot Strategy */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0 },
               }}
-              className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6"
+              className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6"
               style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
             >
               <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
@@ -304,7 +304,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0 },
               }}
-              className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-electric-blue/30 bg-blue-50"
+              className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6 border-2 border-electric-blue/30 bg-blue-50"
               style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
             >
               <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
@@ -320,7 +320,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
             }}
-            className={`backdrop-blur-xl bg-white/90 border rounded-lg p-6 ${
+            className={`backdrop-blur-xl bg-white/90 border rounded-lg p-4 sm:p-5 md:p-6 ${
               universityImpact.impact === 'positive' 
                 ? 'border-cyan-400/30 bg-cyan-50' 
                 : universityImpact.impact === 'neutral'
@@ -382,14 +382,14 @@ export default function ResultView({ result, university, major }: ResultViewProp
 
           {/* Premium Sections: Upskilling Roadmap, Human Moat Triggers, Recommended Tools */}
           {result.upskillingRoadmap && result.upskillingRoadmap.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
               {/* Upskilling Roadmap */}
               <motion.div
                 variants={{
                   hidden: { opacity: 0, y: 20 },
                   visible: { opacity: 1, y: 0 },
                 }}
-                className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-electric-blue/30"
+                className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6 border-2 border-electric-blue/30"
                 style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
               >
                 <div className="flex items-center gap-2 mb-4">
@@ -417,7 +417,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                     hidden: { opacity: 0, y: 20 },
                     visible: { opacity: 1, y: 0 },
                   }}
-                  className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-cyan-400/30"
+                  className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6 border-2 border-cyan-400/30"
                   style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
                 >
                   <div className="flex items-center gap-2 mb-4">
@@ -446,7 +446,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                     hidden: { opacity: 0, y: 20 },
                     visible: { opacity: 1, y: 0 },
                   }}
-                  className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6 border-2 border-neon-purple/30"
+                  className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6 border-2 border-neon-purple/30"
                   style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
                 >
                   <div className="flex items-center gap-2 mb-4">
@@ -497,12 +497,12 @@ export default function ResultView({ result, university, major }: ResultViewProp
             }`} />
 
             {/* CTA Card Overlay - Centered */}
-            <div className="absolute inset-0 flex items-center justify-center z-50 p-4">
+            <div className="absolute inset-0 flex items-center justify-center z-50 p-3 sm:p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white/95 backdrop-blur-xl rounded-lg p-8 max-w-md w-full border-2 shadow-2xl"
+                className="bg-white/95 backdrop-blur-xl rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full border-2 shadow-2xl"
                 style={{
                   borderColor: isImmediateThreat ? 'rgba(239, 68, 68, 0.8)' : isMidTermThreat ? 'rgba(251, 146, 60, 0.8)' : 'rgba(251, 146, 60, 0.8)',
                   boxShadow: isImmediateThreat 
@@ -510,15 +510,15 @@ export default function ResultView({ result, university, major }: ResultViewProp
                     : '0 0 30px rgba(251, 146, 60, 0.6), 0 20px 60px rgba(0, 0, 0, 0.3)'
                 }}
               >
-                <div className="text-center mb-6">
-                  <Lock className="w-12 h-12 mx-auto mb-4 text-gray-700" />
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                <div className="text-center mb-4 sm:mb-6">
+                  <Lock className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mx-auto mb-3 sm:mb-4 text-gray-700" />
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">
                     Unlock Your Full Survival Blueprint
                   </h3>
-                  <p className="text-gray-700 leading-relaxed mb-2">
+                  <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-2">
                     Pivot Strategies, Upskilling Roadmap, and AI-Resistant Niche Identification.
                   </p>
-                  <p className="text-lg font-semibold text-gray-900">
+                  <p className="text-base sm:text-lg font-semibold text-gray-900">
                     {isUK ? '£4' : '$4'}
                   </p>
                 </div>

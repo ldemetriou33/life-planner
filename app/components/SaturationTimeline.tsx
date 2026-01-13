@@ -74,16 +74,16 @@ export default function SaturationTimeline({ saturationYear, showOnlyPhase1 = fa
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-6"
+      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6"
       style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
     >
-      <h3 className="text-xl font-semibold mb-6 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+      <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-4 sm:mb-5 md:mb-6 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
         Extinction Timeline (2026-2050)
       </h3>
 
       <div className="relative">
         {/* Timeline bar container */}
-        <div className="relative h-20 bg-gray-100 rounded-full border border-gray-300 overflow-hidden">
+        <div className="relative h-12 sm:h-16 md:h-20 bg-gray-100 rounded-full border border-gray-300 overflow-hidden">
           {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50" />
           
@@ -168,13 +168,13 @@ export default function SaturationTimeline({ saturationYear, showOnlyPhase1 = fa
         </div>
 
         {/* Year labels at bottom */}
-        <div className="relative mt-12 h-8">
+        <div className="relative mt-6 sm:mt-8 md:mt-12 h-6 sm:h-8">
           {years.map((year) => {
             const yearPosition = ((year - currentYear) / totalYears) * 100
             return (
               <div
                 key={year}
-                className="absolute text-xs text-gray-600 font-medium"
+                className="absolute text-[10px] sm:text-xs text-gray-600 font-medium"
                 style={{ left: `${yearPosition}%`, transform: 'translateX(-50%)' }}
               >
                 {year}
@@ -189,9 +189,9 @@ export default function SaturationTimeline({ saturationYear, showOnlyPhase1 = fa
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.5 }}
-            className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
+            className="mt-3 sm:mt-4 p-2 sm:p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
           >
-            <p className="text-sm text-red-400 font-medium text-center">
+            <p className="text-xs sm:text-sm text-red-400 font-medium text-center">
               ⚠️ Immediate Threat: AI saturation expected in {yearsUntilSaturation} years
             </p>
           </motion.div>
@@ -201,9 +201,9 @@ export default function SaturationTimeline({ saturationYear, showOnlyPhase1 = fa
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.5 }}
-            className="mt-4 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg"
+            className="mt-3 sm:mt-4 p-2 sm:p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg"
           >
-            <p className="text-sm text-orange-400 font-medium text-center">
+            <p className="text-xs sm:text-sm text-orange-400 font-medium text-center">
               ⚠️ Mid-Term Threat: AI saturation expected in {yearsUntilSaturation} years
             </p>
           </motion.div>
@@ -213,9 +213,9 @@ export default function SaturationTimeline({ saturationYear, showOnlyPhase1 = fa
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.5 }}
-            className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg"
+            className="mt-3 sm:mt-4 p-2 sm:p-3 bg-green-500/10 border border-green-500/30 rounded-lg"
           >
-            <p className="text-sm text-green-400 font-medium text-center">
+            <p className="text-xs sm:text-sm text-green-400 font-medium text-center">
               ✓ Long-Term Safe: AI saturation expected in {yearsUntilSaturation} years
             </p>
           </motion.div>
