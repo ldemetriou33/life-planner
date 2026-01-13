@@ -316,13 +316,28 @@ export default function ResultView({ result, university, major }: ResultViewProp
         <div className={`space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8 ${!isPremium ? 'filter blur-[2px] pointer-events-none' : ''}`}>
           {/* Human Moat and Timeline - Limit height on mobile when locked */}
           <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 ${!isPremium ? 'lg:block' : ''}`}>
-            <div className={!isPremium ? 'max-h-48 sm:max-h-64 lg:max-h-none overflow-hidden' : ''}>
+            <div className={`relative ${!isPremium ? 'max-h-48 sm:max-h-64 lg:max-h-none overflow-hidden' : ''}`}>
               <HumanMoatIndicator level={result.human_moat} />
+              {!isPremium && (
+                <div className="lg:hidden absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+              )}
             </div>
-            <div className={!isPremium ? 'max-h-48 sm:max-h-64 lg:max-h-none overflow-hidden' : ''}>
+            <div className={`relative ${!isPremium ? 'max-h-48 sm:max-h-64 lg:max-h-none overflow-hidden' : ''}`}>
               <SaturationTimeline saturationYear={result.saturation_year} showOnlyPhase1={!isPremium} />
+              {!isPremium && (
+                <div className="lg:hidden absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+              )}
             </div>
           </div>
+          
+          {/* Scroll indicator on mobile when locked */}
+          {!isPremium && (
+            <div className="lg:hidden text-center py-2">
+              <p className="text-xs text-gray-500 italic">
+                Scroll down or unlock to see more details
+              </p>
+            </div>
+          )}
 
           {/* Premium Timeline (Full) - Only show if premium */}
           {isPremium && (
