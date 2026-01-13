@@ -5,9 +5,20 @@ import { saveEmail } from "../../../lib/emailStorage";
 import { saveAssessment } from "../../../lib/scoreStorage";
 
 // 1. SETUP GEMINI (Will be null if no key is found)
-const genAI = process.env.GEMINI_API_KEY 
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) 
+const geminiApiKey = process.env.GEMINI_API_KEY;
+const genAI = geminiApiKey 
+  ? new GoogleGenerativeAI(geminiApiKey) 
   : null;
+
+// Log Gemini status on server startup (only in development)
+if (process.env.NODE_ENV === 'development') {
+  if (genAI) {
+    console.log('✅ Gemini AI is configured and ready');
+  } else {
+    console.log('⚠️ Gemini AI not configured - GEMINI_API_KEY not found');
+    console.log('   Using offline preset system as fallback');
+  }
+}
 
 // 2. DEFINE THE OUTPUT SCHEMA (For Real AI)
 const schema = {
@@ -56,9 +67,14 @@ export async function POST(req: Request) {
     // STRATEGY A: REAL AI (GOOGLE GEMINI)
     // ---------------------------------------------------------
     if (genAI) {
+      console.log('🤖 Using Gemini AI for assessment...');
+      console.log('University:', university);
+      console.log('Major:', major);
+      
       try {
+        // Use gemini-pro (stable model) - gemini-1.5-flash may not be available in all regions/API versions
         const model = genAI.getGenerativeModel({
-          model: "gemini-1.5-flash",
+          model: "gemini-pro",
           generationConfig: {
             responseMimeType: "application/json",
             responseSchema: schema,
@@ -100,15 +116,35 @@ export async function POST(req: Request) {
         const text = result.response.text();
         const data = JSON.parse(text);
         
+        // Validate Gemini response has all required fields
+        if (!data.singularity_score || !data.verdict || !data.upskillingRoadmap) {
+          console.warn("⚠️ Gemini response missing required fields, falling back to offline");
+          throw new Error("Incomplete Gemini response");
+        }
+        
+        console.log('✅ Gemini AI successfully generated assessment');
+        console.log('Score:', data.singularity_score);
+        console.log('Verdict:', data.verdict);
+        
         // Save assessment for statistics
         await saveAssessment(data.singularity_score, major, university);
         
+        // Mark that this was AI-generated
+        const aiGeneratedData = {
+          ...data,
+          _source: 'gemini-ai' // Internal flag to track AI vs preset
+        };
+        
         // Return Real Data
-        return NextResponse.json(data);
+        return NextResponse.json(aiGeneratedData);
       } catch (geminiError) {
-        console.warn("Gemini Failed (Falling back to offline):", geminiError);
+        console.error("❌ Gemini Failed (Falling back to offline):", geminiError);
+        console.error("Error details:", geminiError instanceof Error ? geminiError.message : String(geminiError));
         // Fall through to offline logic below...
       }
+    } else {
+      console.log('⚠️ Gemini AI not configured - using offline preset system');
+      console.log('To enable Gemini, set GEMINI_API_KEY environment variable');
     }
 
     // ---------------------------------------------------------
@@ -124,8 +160,8 @@ export async function POST(req: Request) {
     let data;
 
     // PHASE 1: THE LAPTOP PURGE (2026–2029)
-    // CS, Data, Digital Art, Translation, Basic Finance, Marketing
-    if (input.match(/comput|softwar|code|data|analy|account|financ|translat|writ|journal|copy|graphic|digit|market/)) {
+    // CS, Data, Digital Art, Translation, Basic Finance, Marketing, AI
+    if (input.match(/comput|softwar|code|data|analy|account|financ|translat|writ|journal|copy|graphic|digit|market|artificial intelligence|machine learning|ai\b|ml\b/)) {
       data = {
         singularity_score: 15, // CRITICAL
         human_moat: "Low",
@@ -315,7 +351,8 @@ export async function POST(req: Request) {
 
     // PHASE 6: THE HUMAN PREMIUM (2041–2056)
     // Philosophy, Psychology, Nursing, Art (fine), Theology, Education (early childhood), Bio-engineering
-    else if (input.match(/philosoph|psycholog|nurs|art|fine|theolog|educ|early childhood|bio-engin/)) {
+    // Note: Exclude "artificial" - use word boundaries to match "art" but not "artificial"
+    else if (input.match(/philosoph|psycholog|nurs|(^|\s)art(\s|$)|fine art|theolog|educ|early childhood|bio-engin/)) {
       data = {
         singularity_score: 98, // IMMORTAL
         human_moat: "High",
@@ -392,10 +429,20 @@ export async function POST(req: Request) {
     // Save assessment for statistics
     await saveAssessment(data.singularity_score, major, university);
 
+    // Mark that this was from offline preset
+    const offlineData = {
+      ...data,
+      _source: 'offline-preset' // Internal flag to track AI vs preset
+    };
+
+    console.log('📋 Using offline preset system');
+    console.log('Score:', offlineData.singularity_score);
+    console.log('Verdict:', offlineData.verdict);
+
     // Simulate Network Latency
     await new Promise((resolve) => setTimeout(resolve, 1000));
     
-    return NextResponse.json(data);
+    return NextResponse.json(offlineData);
 
   } catch (error) {
     return NextResponse.json({ error: "Analysis Failed" }, { status: 500 });

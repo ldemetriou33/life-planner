@@ -32,33 +32,30 @@ export async function getAssessments(): Promise<AssessmentEntry[]> {
   }
 }
 
-// Save assessment to file
+// Save assessment to file (or just log on Vercel where file system is read-only)
 export async function saveAssessment(
   singularity_score: number,
   major: string,
   university: string
 ): Promise<void> {
+  const newEntry: AssessmentEntry = {
+    singularity_score,
+    major,
+    university,
+    timestamp: new Date().toISOString(),
+  }
+  
+  // Try to save to file (works locally, fails on Vercel - that's okay)
   try {
     await ensureDataDir()
     const assessments = await getAssessments()
-    
-    const newEntry: AssessmentEntry = {
-      singularity_score,
-      major,
-      university,
-      timestamp: new Date().toISOString(),
-    }
-    
     assessments.push(newEntry)
-    
     await fs.writeFile(ASSESSMENTS_FILE, JSON.stringify(assessments, null, 2), 'utf-8')
-    
-    // Also log to console for immediate visibility
-    console.log('Assessment saved:', newEntry)
+    console.log('Assessment saved to file:', newEntry)
   } catch (error) {
-    console.error('Error saving assessment:', error)
-    // Still log to console as fallback
-    console.log('Assessment data:', { singularity_score, major, university, timestamp: new Date().toISOString() })
+    // File system is read-only on Vercel - just log instead
+    // This is expected behavior on serverless functions
+    console.log('Assessment data (logged only - file system read-only on Vercel):', newEntry)
   }
 }
 

@@ -153,13 +153,8 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const foundUniversity = findUniversity(university)
   const triggerRef = useRef<HTMLDivElement>(null)
 
-  // Check localStorage for existing payment on mount
-  useEffect(() => {
-    const premiumUnlocked = localStorage.getItem('premium_unlocked')
-    if (premiumUnlocked === 'true') {
-      setIsPremium(true)
-    }
-  }, [])
+  // Premium is always locked by default - require payment/password each time
+  // Removed localStorage check so users must unlock every time
 
   // Detect if user is in UK
   useEffect(() => {
