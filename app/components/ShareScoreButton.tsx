@@ -104,7 +104,7 @@ export default function ShareScoreButton({ score, verdict, university, major, zo
           className="w-full py-4 px-6 bg-gradient-to-r from-electric-blue to-neon-purple text-white rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-3"
         >
           <Share2 className="w-5 h-5" />
-          Think your colleagues are safer? Challenge them.
+          Think your friends are safer? Challenge them.
         </motion.button>
 
         {/* Share Options Panel */}

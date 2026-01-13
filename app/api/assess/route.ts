@@ -1,6 +1,7 @@
 // app/api/assess/route.ts
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { saveEmail } from "../../../lib/emailStorage";
 
 // 1. SETUP GEMINI (Will be null if no key is found)
 const genAI = process.env.GEMINI_API_KEY 
@@ -25,11 +26,9 @@ export async function POST(req: Request) {
   try {
     const { email, university, major } = await req.json();
 
-    // Store email (log for now, can be extended to database/file storage)
+    // Store email to file
     if (email) {
-      console.log('User email:', email)
-      console.log('Assessment request:', { email, university, major, timestamp: new Date().toISOString() })
-      // TODO: Store email in database or file system for future use
+      await saveEmail(email, university, major)
     }
 
     // ---------------------------------------------------------
