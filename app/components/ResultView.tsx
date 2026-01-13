@@ -324,7 +324,24 @@ export default function ResultView({ result, university, major }: ResultViewProp
         </div>
       </div>
 
-      {/* MOBILE PAYMENT BOX - Appears after verdict section, sticky after scroll */}
+      {/* Share Your Score Button - Before Payment Box */}
+      <motion.div
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          visible: { opacity: 1, y: 0 },
+        }}
+        className="w-full"
+      >
+        <ShareScoreButton
+          score={result.singularity_score}
+          verdict={result.verdict}
+          university={university}
+          major={major}
+          zone={result.singularity_score >= 80 ? 'Safe Zone' : result.singularity_score >= 50 ? 'Caution Zone' : 'Danger Zone'}
+        />
+      </motion.div>
+
+      {/* MOBILE PAYMENT BOX - Appears after share section, sticky after scroll */}
       {!isPremium && (
         <div 
           ref={triggerRef}
@@ -372,23 +389,6 @@ export default function ResultView({ result, university, major }: ResultViewProp
         </div>
       )}
 
-      {/* Share Your Score Button - After Payment Box */}
-      <motion.div
-        variants={{
-          hidden: { opacity: 0, y: 20 },
-          visible: { opacity: 1, y: 0 },
-        }}
-        className="w-full"
-      >
-        <ShareScoreButton
-          score={result.singularity_score}
-          verdict={result.verdict}
-          university={university}
-          major={major}
-          zone={result.singularity_score >= 80 ? 'Safe Zone' : result.singularity_score >= 50 ? 'Caution Zone' : 'Danger Zone'}
-        />
-      </motion.div>
-
       {/* Sticky payment box that appears after scrolling past verdict */}
       {!isPremium && (
         <StickyPaymentBox
@@ -405,7 +405,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
       {/* PREMIUM CONTENT - Everything except Verdict and Score */}
       <div id="premium-content" className="relative">
         {/* All Premium Content - Blurred when locked */}
-        <div className={`space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8 ${!isPremium ? 'filter blur-[2px] pointer-events-none' : ''}`}>
+        <div className={`space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8 ${!isPremium ? 'filter blur-[6px] lg:blur-[2px] pointer-events-none' : ''}`}>
           {/* Human Moat and Timeline - Show full content so users can see there's a lot locked */}
           <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 ${!isPremium ? 'lg:block' : ''}`}>
             <HumanMoatIndicator level={result.human_moat} />
