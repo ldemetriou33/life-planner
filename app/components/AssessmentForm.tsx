@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Loader2, GraduationCap, BookOpen, Mail } from 'lucide-react'
 import AutocompleteInput from './AutocompleteInput'
@@ -17,6 +17,16 @@ export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormPr
   const [university, setUniversity] = useState('')
   const [major, setMajor] = useState('')
   const [errors, setErrors] = useState<{ email?: string; university?: string; major?: string }>({})
+
+  // Load saved email from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedEmail = localStorage.getItem('user_email')
+      if (savedEmail) {
+        setEmail(savedEmail)
+      }
+    }
+  }, [])
 
   // Get university and degree options for autocomplete
   const universityOptions = useMemo(() => {
