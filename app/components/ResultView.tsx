@@ -99,13 +99,13 @@ function StickyPaymentBox({
               Unlock Full Report
             </h3>
             <p className="text-xs text-gray-600">
-              {isUK ? '£4' : '$4'}
+              {isUK ? '£5' : '$5'}
             </p>
           </div>
           <div className="w-full min-w-[150px] max-w-[200px] min-h-[50px]">
             <PayPalButtonContent
               key="sticky-payment-button"
-              amount={4}
+              amount={5}
               currency={isUK ? 'GBP' : 'USD'}
               onSuccess={onSuccess}
               onError={onError}
@@ -446,7 +446,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                 Pivot Strategies & Upskilling Roadmap
               </p>
               <p className="text-lg font-semibold text-gray-900">
-                {isUK ? '£4' : '$4'}
+                {isUK ? '£5' : '$5'}
               </p>
             </div>
             
@@ -486,7 +486,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
             <div className="w-full min-h-[50px]">
               <PayPalButtonContent
                 key="mobile-payment-button"
-                amount={4}
+                amount={5}
                 currency={isUK ? 'GBP' : 'USD'}
                 onSuccess={handlePaymentSuccess}
                 onError={handlePaymentError}
@@ -770,7 +770,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                     More Information on your Score, Pivot Strategies, Upskilling Roadmap, and AI-Resistant Niche Identification.
                   </p>
                   <p className="text-lg font-semibold text-gray-900">
-                    {isUK ? '£4' : '$4'}
+                    {isUK ? '£5' : '$5'}
                   </p>
                 </div>
                 
@@ -783,7 +783,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                 <div className="w-full min-h-[50px]">
                   <PayPalButtonContent
                     key="desktop-overlay-payment-button"
-                    amount={4}
+                    amount={5}
                     currency={isUK ? 'GBP' : 'USD'}
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
