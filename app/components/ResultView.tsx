@@ -7,6 +7,7 @@ import SaturationTimeline from './SaturationTimeline'
 import HumanMoatIndicator from './HumanMoatIndicator'
 import { findUniversity } from '../data/universities'
 import { Lock, Unlock } from 'lucide-react'
+import PayPalButton from './PayPalButton'
 
 interface SingularityResult {
   singularity_score: number
@@ -31,7 +32,16 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const [isPremium, setIsPremium] = useState(false)
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [isUK, setIsUK] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
   const foundUniversity = findUniversity(university)
+
+  // Check localStorage for existing payment on mount
+  useEffect(() => {
+    const premiumUnlocked = localStorage.getItem('premium_unlocked')
+    if (premiumUnlocked === 'true') {
+      setIsPremium(true)
+    }
+  }, [])
 
   // Detect if user is in UK
   useEffect(() => {
@@ -155,17 +165,21 @@ export default function ResultView({ result, university, major }: ResultViewProp
 
   const verdictStyle = getVerdictStyle()
 
-  // Mock payment handler
-  const handlePayment = async () => {
-    setIsProcessingPayment(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
+  // PayPal payment success handler
+  const handlePaymentSuccess = () => {
     setIsPremium(true)
     setIsProcessingPayment(false)
+    setPaymentError(null)
     // Scroll to premium content
     setTimeout(() => {
       document.getElementById('premium-content')?.scrollIntoView({ behavior: 'smooth' })
     }, 100)
+  }
+
+  // PayPal payment error handler
+  const handlePaymentError = (error: string) => {
+    setPaymentError(error)
+    setIsProcessingPayment(false)
   }
 
   // Determine threat level for locked section styling
@@ -483,40 +497,26 @@ export default function ResultView({ result, university, major }: ResultViewProp
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">
                     Unlock Your Full Survival Blueprint
                   </h3>
-                  <p className="text-gray-700 leading-relaxed">
+                  <p className="text-gray-700 leading-relaxed mb-2">
                     Pivot Strategies, Upskilling Roadmap, and AI-Resistant Niche Identification.
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {isUK ? '£4' : '$4'}
                   </p>
                 </div>
                 
-                <motion.button
-                  onClick={handlePayment}
-                  disabled={isProcessingPayment}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`w-full py-4 px-6 rounded-lg font-bold text-lg text-white transition-all ${
-                    isImmediateThreat
-                      ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
-                      : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
-                  } disabled:opacity-50 disabled:cursor-not-allowed shadow-lg`}
-                  style={{
-                    boxShadow: isImmediateThreat
-                      ? '0 0 20px rgba(239, 68, 68, 0.6)'
-                      : '0 0 20px rgba(251, 146, 60, 0.6)'
-                  }}
-                >
-                  {isProcessingPayment ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                      />
-                      Processing...
-                    </span>
-                  ) : (
-                    `Unlock for ${isUK ? '£4' : '$4'}`
-                  )}
-                </motion.button>
+                {paymentError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600 text-center">{paymentError}</p>
+                  </div>
+                )}
+                
+                <PayPalButton
+                  amount={4}
+                  currency={isUK ? 'GBP' : 'USD'}
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                />
               </motion.div>
             </div>
           </>

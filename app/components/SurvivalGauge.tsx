@@ -73,7 +73,7 @@ export default function SurvivalGauge({ score }: SurvivalGaugeProps) {
       style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
     >
       <div className="relative z-10">
-        <h3 className="text-sm font-medium text-gray-600 mb-4 uppercase tracking-wider">
+        <h3 className="text-sm font-medium text-gray-600 mb-4 uppercase tracking-wider text-center">
           Singularity Survival Score
         </h3>
         
