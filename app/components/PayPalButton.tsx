@@ -1,7 +1,7 @@
 'use client'
 
 import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 interface PayPalButtonProps {
   amount: number
@@ -132,10 +132,6 @@ export default function PayPalButton({ amount, currency, onSuccess, onError }: P
         intent: 'capture',
         enableFunding: 'paypal,card,applepay,venmo',
         components: 'buttons',
-        'data-namespace': 'paypal_sdk',
-        'data-sdk-integration-source': 'button-factory',
-        merchantId: undefined, // Let PayPal auto-detect
-        buyerCountry: undefined, // Auto-detect from user
       }}
     >
       <PayPalButtonContent 
