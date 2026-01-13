@@ -19,8 +19,28 @@ const schema = {
     verdict: { type: SchemaType.STRING },
     timeline_context: { type: SchemaType.STRING },
     pivot_strategy: { type: SchemaType.STRING },
+    upskillingRoadmap: {
+      type: SchemaType.ARRAY,
+      items: { type: SchemaType.STRING }
+    },
+    humanMoatTriggers: {
+      type: SchemaType.ARRAY,
+      items: { type: SchemaType.STRING }
+    },
+    recommendedTools: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          name: { type: SchemaType.STRING },
+          description: { type: SchemaType.STRING },
+          url: { type: SchemaType.STRING }
+        },
+        required: ["name", "description"]
+      }
+    }
   },
-  required: ["singularity_score", "human_moat", "saturation_year", "verdict", "pivot_strategy"],
+  required: ["singularity_score", "human_moat", "saturation_year", "verdict", "pivot_strategy", "timeline_context", "upskillingRoadmap", "humanMoatTriggers", "recommendedTools"],
 };
 
 export async function POST(req: Request) {
@@ -62,7 +82,18 @@ export async function POST(req: Request) {
         - Top-tier universities (Ivy League, Oxbridge, etc.) add +3-5 to score
         - Lower-tier universities subtract -2-3 from score
         
-        Output valid JSON with singularity_score (0-100), human_moat ("High"/"Medium"/"Low"), saturation_year (2026-2045), verdict (string), timeline_context (string), and pivot_strategy (string).
+        Provide a comprehensive analysis including:
+        - singularity_score (0-100): Overall AI resistance score
+        - human_moat ("High"/"Medium"/"Low"): Level of protection from AI
+        - saturation_year (2026-2045): When AI will fully replace this role
+        - verdict (string): A dramatic, memorable verdict name (e.g., "The Laptop Purge", "The Middleman Massacre")
+        - timeline_context (string): Explanation of when and why this role becomes obsolete
+        - pivot_strategy (string): Specific, actionable advice for pivoting to AI-resistant roles
+        - upskillingRoadmap (array of strings): 5 specific skills to develop, ordered by priority
+        - humanMoatTriggers (array of strings): 4-5 specific human advantages that protect this role from AI
+        - recommendedTools (array of objects): 3-4 tools/platforms to help with the pivot, each with name, description, and optional url
+        
+        Make the analysis specific to ${university} and ${major}. Consider how the university's reputation and network affects career trajectory.
         `;
 
         const result = await model.generateContent(prompt);
