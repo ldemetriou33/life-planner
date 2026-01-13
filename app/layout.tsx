@@ -12,6 +12,22 @@ export const metadata: Metadata = {
   title: 'Reality Check - Career Strategy',
   description: 'Get an honest assessment of your career path based on your university and major',
   themeColor: '#ffffff',
+  metadataBase: new URL('https://universitycheck.xyz'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Reality Check - Career Strategy',
+    description: 'Get an honest assessment of your career path based on your university and major',
+    url: 'https://universitycheck.xyz',
+    siteName: 'University Check',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Reality Check - Career Strategy',
+    description: 'Get an honest assessment of your career path based on your university and major',
+  },
 }
 
 export default function RootLayout({
