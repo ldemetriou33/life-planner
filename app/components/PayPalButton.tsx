@@ -1,7 +1,7 @@
 'use client'
 
 import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js'
-import { useState } from 'react'
+import { useState, memo } from 'react'
 
 interface PayPalButtonProps {
   amount: number
@@ -11,21 +11,24 @@ interface PayPalButtonProps {
 }
 
 // Inner component to access PayPal script state
-function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalButtonProps) {
+// This component must be used within a PayPalScriptProvider
+// Memoized to prevent unnecessary re-renders that could cause buttons to disappear
+export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalButtonProps) {
   const [{ isResolved, isPending, isRejected }] = usePayPalScriptReducer()
   const [isProcessing, setIsProcessing] = useState(false)
 
   if (isRejected) {
     return (
-      <div className="text-red-500 text-sm text-center p-4">
+      <div className="text-red-500 text-sm text-center p-4 min-h-[50px] flex items-center justify-center">
         Failed to load PayPal. Please refresh the page.
       </div>
     )
   }
 
-  if (isPending) {
+  // Show loading state while pending, but keep container height stable
+  if (isPending || !isResolved) {
     return (
-      <div className="text-center p-4">
+      <div className="text-center p-4 min-h-[50px] flex flex-col items-center justify-center">
         <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mb-2"></div>
         <p className="text-sm text-gray-600">Loading payment options...</p>
       </div>
@@ -80,12 +83,8 @@ function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalBut
     setIsProcessing(false)
   }
 
-  if (!isResolved) {
-    return null
-  }
-
   return (
-    <div className="w-full">
+    <div className="w-full min-h-[50px]">
       {isProcessing && (
         <div className="mb-2 text-center text-sm text-gray-600">
           Processing payment...
@@ -110,7 +109,7 @@ function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalBut
       />
     </div>
   )
-}
+})
 
 export default function PayPalButton({ amount, currency, onSuccess, onError }: PayPalButtonProps) {
   // Get client ID from environment variable or use fallback

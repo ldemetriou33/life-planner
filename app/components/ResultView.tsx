@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { PayPalScriptProvider } from '@paypal/react-paypal-js'
 import SurvivalGauge from './SurvivalGauge'
 import SaturationTimeline from './SaturationTimeline'
 import HumanMoatIndicator from './HumanMoatIndicator'
 import { findUniversity } from '../data/universities'
 import { Lock, Unlock } from 'lucide-react'
-import PayPalButton from './PayPalButton'
+import { PayPalButtonContent } from './PayPalButton'
 import ShareScoreButton from './ShareScoreButton'
 
 // Sticky Payment Box Component for Mobile
@@ -92,7 +93,7 @@ function StickyPaymentBox({
           )}
         </form>
 
-        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2">
           <div className="flex-1">
             <h3 className="text-sm font-bold text-gray-900">
               Unlock Full Report
@@ -101,12 +102,15 @@ function StickyPaymentBox({
               {isUK ? '£4' : '$4'}
             </p>
           </div>
-          <PayPalButton
-            amount={4}
-            currency={isUK ? 'GBP' : 'USD'}
-            onSuccess={onSuccess}
-            onError={onError}
-          />
+          <div className="w-full min-w-[150px] max-w-[200px] min-h-[50px]">
+            <PayPalButtonContent
+              key="sticky-payment-button"
+              amount={4}
+              currency={isUK ? 'GBP' : 'USD'}
+              onSuccess={onSuccess}
+              onError={onError}
+            />
+          </div>
         </div>
         {paymentError && (
           <p className="text-xs text-red-600 text-center mt-2">{paymentError}</p>
@@ -313,7 +317,20 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const isImmediateThreat = result.saturation_year < 2030
   const isMidTermThreat = result.saturation_year >= 2030 && result.saturation_year <= 2038
 
+  // Get client ID from environment variable or use fallback
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
+
+  // Memoize PayPal provider options to prevent re-initialization
+  const paypalOptions = useMemo(() => ({
+    clientId,
+    currency: isUK ? 'GBP' : 'USD',
+    intent: 'capture' as const,
+    enableFunding: 'paypal,card,applepay,venmo' as const,
+    components: 'buttons' as const,
+  }), [isUK, clientId])
+
   return (
+    <PayPalScriptProvider options={paypalOptions}>
     <motion.div
       variants={containerVariants}
       initial="hidden"
@@ -457,12 +474,15 @@ export default function ResultView({ result, university, major }: ResultViewProp
               </div>
             )}
             
-            <PayPalButton
-              amount={4}
-              currency={isUK ? 'GBP' : 'USD'}
-              onSuccess={handlePaymentSuccess}
-              onError={handlePaymentError}
-            />
+            <div className="w-full min-h-[50px]">
+              <PayPalButtonContent
+                key="mobile-payment-button"
+                amount={4}
+                currency={isUK ? 'GBP' : 'USD'}
+                onSuccess={handlePaymentSuccess}
+                onError={handlePaymentError}
+              />
+            </div>
           </motion.div>
         </div>
       )}
@@ -738,7 +758,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                     Unlock Your Full Survival Blueprint
                   </h3>
                   <p className="text-base text-gray-700 leading-relaxed mb-2">
-                    Pivot Strategies, Upskilling Roadmap, and AI-Resistant Niche Identification.
+                    More Information on your Score, Pivot Strategies, Upskilling Roadmap, and AI-Resistant Niche Identification.
                   </p>
                   <p className="text-lg font-semibold text-gray-900">
                     {isUK ? '£4' : '$4'}
@@ -751,12 +771,15 @@ export default function ResultView({ result, university, major }: ResultViewProp
                   </div>
                 )}
                 
-                <PayPalButton
-                  amount={4}
-                  currency={isUK ? 'GBP' : 'USD'}
-                  onSuccess={handlePaymentSuccess}
-                  onError={handlePaymentError}
-                />
+                <div className="w-full min-h-[50px]">
+                  <PayPalButtonContent
+                    key="desktop-overlay-payment-button"
+                    amount={4}
+                    currency={isUK ? 'GBP' : 'USD'}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
+                </div>
               </motion.div>
             </div>
           </div>
@@ -770,6 +793,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
         </p>
       </div>
     </motion.div>
+    </PayPalScriptProvider>
   )
 }
 
