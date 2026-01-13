@@ -73,7 +73,19 @@ export default function PayPalButton({ amount, currency, onSuccess, onError }: P
   }
 
   return (
-    <PayPalScriptProvider options={{ clientId, currency }}>
+    <PayPalScriptProvider 
+      options={{ 
+        clientId, 
+        currency,
+        intent: 'capture',
+        enableFunding: 'paypal,card,applepay,venmo', // Enable Apple Pay and other funding sources
+        'data-sdk-integration-source': 'button-factory',
+        components: 'buttons,marks,funding-eligibility',
+        disableFunding: '', // Don't disable any funding sources
+        dataClientToken: undefined, // Let PayPal handle tokenization
+        buyNow: true, // Optimize for faster checkout
+      }}
+    >
       <div className="w-full">
         {isProcessing && (
           <div className="mb-2 text-center text-sm text-gray-600">
@@ -90,7 +102,10 @@ export default function PayPalButton({ amount, currency, onSuccess, onError }: P
             color: 'gold',
             shape: 'rect',
             label: 'paypal',
+            height: 50,
+            tagline: false,
           }}
+          forceReRender={[amount, currency]}
         />
       </div>
     </PayPalScriptProvider>
