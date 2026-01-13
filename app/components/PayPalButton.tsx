@@ -1,7 +1,7 @@
 'use client'
 
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js'
-import { useState } from 'react'
+import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js'
+import { useState, useEffect } from 'react'
 
 interface PayPalButtonProps {
   amount: number
@@ -10,16 +10,24 @@ interface PayPalButtonProps {
   onError?: (error: string) => void
 }
 
-export default function PayPalButton({ amount, currency, onSuccess, onError }: PayPalButtonProps) {
+// Inner component to access PayPal script state
+function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalButtonProps) {
+  const [{ isResolved, isPending, isRejected }] = usePayPalScriptReducer()
   const [isProcessing, setIsProcessing] = useState(false)
 
-  // Get client ID from environment variable or use fallback
-  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
-
-  if (!clientId) {
+  if (isRejected) {
     return (
       <div className="text-red-500 text-sm text-center p-4">
-        PayPal client ID not configured. Please restart the development server or add the environment variable.
+        Failed to load PayPal. Please refresh the page.
+      </div>
+    )
+  }
+
+  if (isPending) {
+    return (
+      <div className="text-center p-4">
+        <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mb-2"></div>
+        <p className="text-sm text-gray-600">Loading payment options...</p>
       </div>
     )
   }
@@ -72,42 +80,64 @@ export default function PayPalButton({ amount, currency, onSuccess, onError }: P
     setIsProcessing(false)
   }
 
+  if (!isResolved) {
+    return null
+  }
+
+  return (
+    <div className="w-full">
+      {isProcessing && (
+        <div className="mb-2 text-center text-sm text-gray-600">
+          Processing payment...
+        </div>
+      )}
+      <PayPalButtons
+        createOrder={createOrder}
+        onApprove={onApprove}
+        onError={onErrorHandler}
+        onCancel={onCancel}
+        style={{
+          layout: 'vertical',
+          color: 'gold',
+          shape: 'rect',
+          label: 'paypal',
+          height: 50,
+          tagline: false,
+        }}
+        forceReRender={[amount, currency]}
+      />
+    </div>
+  )
+}
+
+export default function PayPalButton({ amount, currency, onSuccess, onError }: PayPalButtonProps) {
+  // Get client ID from environment variable or use fallback
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
+
+  if (!clientId) {
+    return (
+      <div className="text-red-500 text-sm text-center p-4">
+        PayPal client ID not configured. Please restart the development server or add the environment variable.
+      </div>
+    )
+  }
+
   return (
     <PayPalScriptProvider 
       options={{ 
         clientId, 
         currency,
         intent: 'capture',
-        enableFunding: 'paypal,card,applepay,venmo', // Enable Apple Pay and other funding sources
-        'data-sdk-integration-source': 'button-factory',
-        components: 'buttons,marks,funding-eligibility',
-        disableFunding: '', // Don't disable any funding sources
-        dataClientToken: undefined, // Let PayPal handle tokenization
-        buyNow: true, // Optimize for faster checkout
+        enableFunding: 'paypal,card,applepay,venmo',
+        components: 'buttons',
       }}
     >
-      <div className="w-full">
-        {isProcessing && (
-          <div className="mb-2 text-center text-sm text-gray-600">
-            Processing payment...
-          </div>
-        )}
-        <PayPalButtons
-          createOrder={createOrder}
-          onApprove={onApprove}
-          onError={onErrorHandler}
-          onCancel={onCancel}
-          style={{
-            layout: 'vertical',
-            color: 'gold',
-            shape: 'rect',
-            label: 'paypal',
-            height: 50,
-            tagline: false,
-          }}
-          forceReRender={[amount, currency]}
-        />
-      </div>
+      <PayPalButtonContent 
+        amount={amount} 
+        currency={currency} 
+        onSuccess={onSuccess} 
+        onError={onError} 
+      />
     </PayPalScriptProvider>
   )
 }
