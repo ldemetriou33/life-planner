@@ -324,23 +324,6 @@ export default function ResultView({ result, university, major }: ResultViewProp
         </div>
       </div>
 
-      {/* Share Your Score Button - Before Paywall */}
-      <motion.div
-        variants={{
-          hidden: { opacity: 0, y: 20 },
-          visible: { opacity: 1, y: 0 },
-        }}
-        className="w-full"
-      >
-        <ShareScoreButton
-          score={result.singularity_score}
-          verdict={result.verdict}
-          university={university}
-          major={major}
-          zone={result.singularity_score >= 80 ? 'Safe Zone' : result.singularity_score >= 50 ? 'Caution Zone' : 'Danger Zone'}
-        />
-      </motion.div>
-
       {/* MOBILE PAYMENT BOX - Appears after verdict section, sticky after scroll */}
       {!isPremium && (
         <div 
@@ -388,6 +371,23 @@ export default function ResultView({ result, university, major }: ResultViewProp
           </motion.div>
         </div>
       )}
+
+      {/* Share Your Score Button - After Payment Box */}
+      <motion.div
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          visible: { opacity: 1, y: 0 },
+        }}
+        className="w-full"
+      >
+        <ShareScoreButton
+          score={result.singularity_score}
+          verdict={result.verdict}
+          university={university}
+          major={major}
+          zone={result.singularity_score >= 80 ? 'Safe Zone' : result.singularity_score >= 50 ? 'Caution Zone' : 'Danger Zone'}
+        />
+      </motion.div>
 
       {/* Sticky payment box that appears after scrolling past verdict */}
       {!isPremium && (
