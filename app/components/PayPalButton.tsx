@@ -13,12 +13,13 @@ interface PayPalButtonProps {
 export default function PayPalButton({ amount, currency, onSuccess, onError }: PayPalButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || ''
+  // Get client ID from environment variable or use fallback
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
 
   if (!clientId) {
     return (
-      <div className="text-red-500 text-sm">
-        PayPal client ID not configured
+      <div className="text-red-500 text-sm text-center p-4">
+        PayPal client ID not configured. Please restart the development server or add the environment variable.
       </div>
     )
   }
