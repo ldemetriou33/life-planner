@@ -141,6 +141,7 @@ interface ResultViewProps {
 
 // Password for free access
 const FREE_ACCESS_PASSWORD = process.env.NEXT_PUBLIC_FREE_ACCESS_PASSWORD || 'demo2024'
+const UNI_PASSWORD = 'uni' // Special password for bottom unlock
 
 export default function ResultView({ result, university, major }: ResultViewProps) {
   const [isPremium, setIsPremium] = useState(false)
@@ -304,12 +305,25 @@ export default function ResultView({ result, university, major }: ResultViewProp
     e.preventDefault()
     setPasswordError(null)
     
-    if (password === FREE_ACCESS_PASSWORD) {
+    if (password === FREE_ACCESS_PASSWORD || password === UNI_PASSWORD) {
       setIsPremium(true)
       localStorage.setItem('premium_unlocked', 'true')
       setPassword('')
     } else {
       setPasswordError('Incorrect password')
+    }
+  }
+
+  // Handle bottom password box submission (separate handler)
+  const handleBottomPasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const input = e.currentTarget.querySelector('input') as HTMLInputElement
+    const enteredPassword = input?.value || ''
+    
+    if (enteredPassword === UNI_PASSWORD) {
+      setIsPremium(true)
+      localStorage.setItem('premium_unlocked', 'true')
+      input.value = ''
     }
   }
 
@@ -793,6 +807,27 @@ export default function ResultView({ result, university, major }: ResultViewProp
         </p>
       </div>
     </motion.div>
+    
+    {/* Bottom Password Box - Hidden unlock (outside main container to ensure visibility) */}
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 mt-8 sm:mt-12 pt-8 sm:pt-12 border-t-2 border-gray-300 relative z-[100] bg-white">
+      {!isPremium ? (
+        <form onSubmit={handleBottomPasswordSubmit} className="flex justify-center px-4 py-4">
+          <div className="flex flex-col gap-3 items-center w-full max-w-md">
+            <input
+              type="password"
+              placeholder="Enter password (type 'uni' to unlock)"
+              className="w-full text-base px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-electric-blue/30 focus:border-electric-blue bg-white text-gray-900 shadow-md"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.form?.requestSubmit()
+                }
+              }}
+              autoComplete="off"
+            />
+          </div>
+        </form>
+      ) : null}
+    </div>
     </PayPalScriptProvider>
   )
 }
