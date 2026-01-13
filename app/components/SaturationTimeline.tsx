@@ -74,10 +74,10 @@ export default function SaturationTimeline({ saturationYear, showOnlyPhase1 = fa
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6"
+      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-3 sm:p-4 md:p-5 lg:p-6"
       style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
     >
-      <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-4 sm:mb-5 md:mb-6 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+      <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold mb-3 sm:mb-4 md:mb-5 lg:mb-6 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
         Extinction Timeline (2026-2050)
       </h3>
 

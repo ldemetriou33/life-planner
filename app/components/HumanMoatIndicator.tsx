@@ -40,11 +40,11 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6 relative"
+      className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-3 sm:p-4 md:p-5 lg:p-6 relative"
       style={{ boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)' }}
     >
-      <div className="flex items-center justify-between mb-3 sm:mb-4">
-        <h3 className="text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
+      <div className="flex items-center justify-between mb-2 sm:mb-3 md:mb-4">
+        <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
           Human Moat Level
         </h3>
         <div className="relative">
@@ -75,8 +75,8 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
       </div>
 
       {/* Animated Bar Chart for Human Moat */}
-      <div className="mb-6">
-        <div className="relative h-8 bg-gray-100 rounded-full border border-gray-300 overflow-hidden">
+      <div className="mb-3 sm:mb-4 md:mb-6">
+        <div className="relative h-6 sm:h-7 md:h-8 bg-gray-100 rounded-full border border-gray-300 overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${((activeIndex + 1) / 3) * 100}%` }}
@@ -103,7 +103,7 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
       </div>
 
       {/* Vertical stack of blocks */}
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
         {levels.map((item, index) => {
           const isActive = item.value === level
           const Icon = item.icon
@@ -116,7 +116,7 @@ export default function HumanMoatIndicator({ level }: HumanMoatIndicatorProps) {
               transition={{ delay: index * 0.1, duration: 0.5 }}
               whileHover={{ x: 4 }}
               className={`
-                relative p-4 rounded-lg border-2 transition-all duration-300
+                relative p-2.5 sm:p-3 md:p-4 rounded-lg border-2 transition-all duration-300
                 ${isActive 
                   ? `${item.color} border-opacity-100 shadow-lg` 
                   : 'bg-gray-50 border-gray-200 opacity-50'
