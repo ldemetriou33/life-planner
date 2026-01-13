@@ -101,6 +101,7 @@ export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormPr
           <input
             type="email"
             id="email"
+            name="email"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value)
@@ -108,6 +109,7 @@ export default function AssessmentForm({ onSubmit, isLoading }: AssessmentFormPr
             }}
             placeholder="your.email@example.com"
             disabled={isLoading}
+            autoComplete="email"
             className={`w-full py-3 px-4 rounded-lg border-2 transition-all ${
               errors.email
                 ? 'border-red-500 bg-red-50'
