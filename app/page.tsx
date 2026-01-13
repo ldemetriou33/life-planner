@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import AssessmentForm from './components/AssessmentForm'
 import ResultView from './components/ResultView'
 import CookedAnimation from './components/CookedAnimation'
+import GlobalScoreboard from './components/GlobalScoreboard'
 
 interface SingularityResult {
   singularity_score: number
@@ -102,6 +103,11 @@ export default function Home() {
             Singularity Era career assessment based on Moravec's Paradox - Will AI replace you?
           </p>
         </div>
+
+        {/* Global Scoreboard */}
+        {!results && !error && !degreeMessage && !isLoading && (
+          <GlobalScoreboard />
+        )}
 
         {/* Form Section */}
         {!results && !error && !degreeMessage && !isLoading && (

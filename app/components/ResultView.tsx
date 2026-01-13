@@ -762,6 +762,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
           </div>
         )}
       </div>
+
+      {/* Research Project Note */}
+      <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
+        <p className="text-xs sm:text-sm text-gray-500 text-center max-w-2xl mx-auto">
+          This is an independent research project. All proceeds go toward hosting costs and further development of the datasets.
+        </p>
+      </div>
     </motion.div>
   )
 }

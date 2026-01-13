@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { saveEmail } from "../../../lib/emailStorage";
+import { saveAssessment } from "../../../lib/scoreStorage";
 
 // 1. SETUP GEMINI (Will be null if no key is found)
 const genAI = process.env.GEMINI_API_KEY 
@@ -67,6 +68,9 @@ export async function POST(req: Request) {
         const result = await model.generateContent(prompt);
         const text = result.response.text();
         const data = JSON.parse(text);
+        
+        // Save assessment for statistics
+        await saveAssessment(data.singularity_score, major, university);
         
         // Return Real Data
         return NextResponse.json(data);
@@ -353,6 +357,9 @@ export async function POST(req: Request) {
 
     // Cap score at 100
     if (data.singularity_score > 100) data.singularity_score = 100;
+
+    // Save assessment for statistics
+    await saveAssessment(data.singularity_score, major, university);
 
     // Simulate Network Latency
     await new Promise((resolve) => setTimeout(resolve, 1000));
