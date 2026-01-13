@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import SurvivalGauge from './SurvivalGauge'
 import SaturationTimeline from './SaturationTimeline'
@@ -9,6 +9,80 @@ import { findUniversity } from '../data/universities'
 import { Lock, Unlock } from 'lucide-react'
 import PayPalButton from './PayPalButton'
 import ShareScoreButton from './ShareScoreButton'
+
+// Sticky Payment Box Component for Mobile
+function StickyPaymentBox({ 
+  triggerRef,
+  isImmediateThreat, 
+  isMidTermThreat, 
+  isUK, 
+  paymentError, 
+  onSuccess, 
+  onError 
+}: {
+  triggerRef: React.RefObject<HTMLDivElement>
+  isImmediateThreat: boolean
+  isMidTermThreat: boolean
+  isUK: boolean
+  paymentError: string | null
+  onSuccess: () => void
+  onError: (error: string) => void
+}) {
+  const [isSticky, setIsSticky] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!triggerRef.current) return
+      
+      const triggerRect = triggerRef.current.getBoundingClientRect()
+      // Make sticky when payment trigger is scrolled past
+      setIsSticky(triggerRect.bottom < 0)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    handleScroll() // Check initial state
+
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [triggerRef])
+
+  if (!isSticky) return null
+
+  return (
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-3 bg-white border-t border-gray-200 shadow-lg">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/95 backdrop-blur-xl rounded-lg p-3 border-2 shadow-xl max-w-md mx-auto"
+        style={{
+          borderColor: isImmediateThreat ? 'rgba(239, 68, 68, 0.8)' : isMidTermThreat ? 'rgba(251, 146, 60, 0.8)' : 'rgba(251, 146, 60, 0.8)',
+          boxShadow: isImmediateThreat 
+            ? '0 0 20px rgba(239, 68, 68, 0.4), 0 10px 30px rgba(0, 0, 0, 0.2)' 
+            : '0 0 20px rgba(251, 146, 60, 0.4), 0 10px 30px rgba(0, 0, 0, 0.2)'
+        }}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-gray-900">
+              Unlock Full Report
+            </h3>
+            <p className="text-xs text-gray-600">
+              {isUK ? '£4' : '$4'}
+            </p>
+          </div>
+          <PayPalButton
+            amount={4}
+            currency={isUK ? 'GBP' : 'USD'}
+            onSuccess={onSuccess}
+            onError={onError}
+          />
+        </div>
+        {paymentError && (
+          <p className="text-xs text-red-600 text-center mt-2">{paymentError}</p>
+        )}
+      </motion.div>
+    </div>
+  )
+}
 
 interface SingularityResult {
   singularity_score: number
@@ -35,6 +109,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const [isUK, setIsUK] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const foundUniversity = findUniversity(university)
+  const triggerRef = useRef<HTMLDivElement>(null)
 
   // Check localStorage for existing payment on mount
   useEffect(() => {
@@ -266,14 +341,18 @@ export default function ResultView({ result, university, major }: ResultViewProp
         />
       </motion.div>
 
-      {/* MOBILE PAYMENT BOX - Show immediately after Share button on mobile */}
+      {/* MOBILE PAYMENT BOX - Appears after verdict section, sticky after scroll */}
       {!isPremium && (
-        <div className="lg:hidden sticky bottom-0 z-50 -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 pt-4 pb-2 bg-white border-t border-gray-200 shadow-lg">
+        <div 
+          ref={triggerRef}
+          id="mobile-payment-trigger"
+          className="lg:hidden"
+        >
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="bg-white/95 backdrop-blur-xl rounded-lg p-4 border-2 shadow-xl"
+            className="bg-white/95 backdrop-blur-xl rounded-lg p-4 border-2 shadow-xl mb-4"
             style={{
               borderColor: isImmediateThreat ? 'rgba(239, 68, 68, 0.8)' : isMidTermThreat ? 'rgba(251, 146, 60, 0.8)' : 'rgba(251, 146, 60, 0.8)',
               boxShadow: isImmediateThreat 
@@ -310,34 +389,28 @@ export default function ResultView({ result, university, major }: ResultViewProp
         </div>
       )}
 
+      {/* Sticky payment box that appears after scrolling past verdict */}
+      {!isPremium && (
+        <StickyPaymentBox
+          triggerRef={triggerRef}
+          isImmediateThreat={isImmediateThreat}
+          isMidTermThreat={isMidTermThreat}
+          isUK={isUK}
+          paymentError={paymentError}
+          onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
+        />
+      )}
+
       {/* PREMIUM CONTENT - Everything except Verdict and Score */}
       <div id="premium-content" className="relative">
         {/* All Premium Content - Blurred when locked */}
         <div className={`space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8 ${!isPremium ? 'filter blur-[2px] pointer-events-none' : ''}`}>
-          {/* Human Moat and Timeline - Limit height on mobile when locked */}
+          {/* Human Moat and Timeline - Show full content so users can see there's a lot locked */}
           <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 ${!isPremium ? 'lg:block' : ''}`}>
-            <div className={`relative ${!isPremium ? 'max-h-48 sm:max-h-64 lg:max-h-none overflow-hidden' : ''}`}>
-              <HumanMoatIndicator level={result.human_moat} />
-              {!isPremium && (
-                <div className="lg:hidden absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
-              )}
-            </div>
-            <div className={`relative ${!isPremium ? 'max-h-48 sm:max-h-64 lg:max-h-none overflow-hidden' : ''}`}>
-              <SaturationTimeline saturationYear={result.saturation_year} showOnlyPhase1={!isPremium} />
-              {!isPremium && (
-                <div className="lg:hidden absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
-              )}
-            </div>
+            <HumanMoatIndicator level={result.human_moat} />
+            <SaturationTimeline saturationYear={result.saturation_year} showOnlyPhase1={!isPremium} />
           </div>
-          
-          {/* Scroll indicator on mobile when locked */}
-          {!isPremium && (
-            <div className="lg:hidden text-center py-2">
-              <p className="text-xs text-gray-500 italic">
-                Scroll down or unlock to see more details
-              </p>
-            </div>
-          )}
 
           {/* Premium Timeline (Full) - Only show if premium */}
           {isPremium && (
@@ -350,8 +423,8 @@ export default function ResultView({ result, university, major }: ResultViewProp
             </motion.div>
           )}
 
-          {/* Timeline Context and Pivot Strategy - Hide on mobile when locked */}
-          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 ${!isPremium ? 'hidden lg:grid' : ''}`}>
+          {/* Timeline Context and Pivot Strategy - Show on mobile so users see locked content */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -381,13 +454,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
             </motion.div>
           </div>
 
-          {/* University Impact Analysis - Hide on mobile when locked */}
+          {/* University Impact Analysis - Show on mobile so users see locked content */}
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
             }}
-            className={`backdrop-blur-xl bg-white/90 border rounded-lg p-3 sm:p-4 md:p-5 lg:p-6 ${!isPremium ? 'hidden lg:block' : ''} ${
+            className={`backdrop-blur-xl bg-white/90 border rounded-lg p-3 sm:p-4 md:p-5 lg:p-6 ${
               universityImpact.impact === 'positive' 
                 ? 'border-cyan-400/30 bg-cyan-50' 
                 : universityImpact.impact === 'neutral'
@@ -447,9 +520,9 @@ export default function ResultView({ result, university, major }: ResultViewProp
             </div>
           </motion.div>
 
-          {/* Premium Sections: Upskilling Roadmap, Human Moat Triggers, Recommended Tools - Hide on mobile when locked */}
+          {/* Premium Sections: Upskilling Roadmap, Human Moat Triggers, Recommended Tools - Show on mobile so users see locked content */}
           {result.upskillingRoadmap && result.upskillingRoadmap.length > 0 && (
-            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8 ${!isPremium ? 'hidden lg:grid' : ''}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
               {/* Upskilling Roadmap */}
               <motion.div
                 variants={{
