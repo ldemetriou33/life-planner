@@ -8,6 +8,7 @@ import HumanMoatIndicator from './HumanMoatIndicator'
 import { findUniversity } from '../data/universities'
 import { Lock, Unlock } from 'lucide-react'
 import PayPalButton from './PayPalButton'
+import ShareScoreButton from './ShareScoreButton'
 
 interface SingularityResult {
   singularity_score: number
@@ -243,6 +244,23 @@ export default function ResultView({ result, university, major }: ResultViewProp
           </motion.div>
         </div>
       </div>
+
+      {/* Share Your Score Button - Before Paywall */}
+      <motion.div
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          visible: { opacity: 1, y: 0 },
+        }}
+        className="w-full"
+      >
+        <ShareScoreButton
+          score={result.singularity_score}
+          verdict={result.verdict}
+          university={university}
+          major={major}
+          zone={result.singularity_score >= 80 ? 'Safe Zone' : result.singularity_score >= 50 ? 'Caution Zone' : 'Danger Zone'}
+        />
+      </motion.div>
 
       {/* PREMIUM CONTENT - Everything except Verdict and Score */}
       <div id="premium-content" className="relative">
