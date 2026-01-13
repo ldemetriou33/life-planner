@@ -85,20 +85,19 @@ function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalBut
   }
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full">
       {isProcessing && (
         <div className="mb-2 text-center text-sm text-gray-600">
           Processing payment...
         </div>
       )}
       
-      {/* PayPal Button */}
+      {/* Single PayPal Buttons component that shows all available funding sources */}
       <PayPalButtons
         createOrder={createOrder}
         onApprove={onApprove}
         onError={onErrorHandler}
         onCancel={onCancel}
-        fundingSource="paypal"
         style={{
           layout: 'vertical',
           color: 'gold',
@@ -106,40 +105,6 @@ function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalBut
           label: 'paypal',
           height: 50,
           tagline: false,
-        }}
-        forceReRender={[amount, currency]}
-      />
-      
-      {/* Card/Debit Button */}
-      <PayPalButtons
-        createOrder={createOrder}
-        onApprove={onApprove}
-        onError={onErrorHandler}
-        onCancel={onCancel}
-        fundingSource="card"
-        style={{
-          layout: 'vertical',
-          color: 'black',
-          shape: 'rect',
-          label: 'pay',
-          height: 50,
-        }}
-        forceReRender={[amount, currency]}
-      />
-      
-      {/* Apple Pay Button - Only shows on compatible devices */}
-      <PayPalButtons
-        createOrder={createOrder}
-        onApprove={onApprove}
-        onError={onErrorHandler}
-        onCancel={onCancel}
-        fundingSource="applepay"
-        style={{
-          layout: 'vertical',
-          color: 'black',
-          shape: 'rect',
-          label: 'pay',
-          height: 50,
         }}
         forceReRender={[amount, currency]}
       />
@@ -167,9 +132,6 @@ export default function PayPalButton({ amount, currency, onSuccess, onError }: P
         intent: 'capture',
         enableFunding: 'paypal,card,applepay,venmo',
         components: 'buttons',
-        disableFunding: '', // Don't disable any funding sources
-        'data-namespace': 'paypal_sdk',
-        'data-sdk-integration-source': 'button-factory',
       }}
     >
       <PayPalButtonContent 
