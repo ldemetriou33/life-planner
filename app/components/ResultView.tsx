@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import SurvivalGauge from './SurvivalGauge'
 import SaturationTimeline from './SaturationTimeline'
@@ -30,7 +30,21 @@ interface ResultViewProps {
 export default function ResultView({ result, university, major }: ResultViewProps) {
   const [isPremium, setIsPremium] = useState(false)
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+  const [isUK, setIsUK] = useState(false)
   const foundUniversity = findUniversity(university)
+
+  // Detect if user is in UK
+  useEffect(() => {
+    // Check browser locale
+    const locale = navigator.language || (navigator as any).userLanguage
+    const isUKLocale = locale.toLowerCase().includes('gb') || locale.toLowerCase().includes('uk')
+    
+    // Also check timezone as fallback
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const isUKTimezone = timezone.includes('London') || timezone.includes('Europe/London')
+    
+    setIsUK(isUKLocale || isUKTimezone)
+  }, [])
   
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -500,7 +514,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                       Processing...
                     </span>
                   ) : (
-                    'Unlock for $19'
+                    `Unlock for ${isUK ? '£4' : '$4'}`
                   )}
                 </motion.button>
               </motion.div>
