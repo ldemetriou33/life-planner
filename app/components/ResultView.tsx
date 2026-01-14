@@ -261,6 +261,10 @@ export default function ResultView({ result, university, major }: ResultViewProp
   
   const universityImpact = getUniversityImpact()
 
+  // Use enhanced result if available, otherwise use offline preset
+  // Memoize to ensure it updates when enhancedResult changes
+  const displayResult = useMemo(() => enhancedResult || result, [enhancedResult, result])
+
   // Verdict styling based on score - Cyber-Minimalist colors
   const getVerdictStyle = () => {
     if (displayResult.singularity_score >= 80) {
@@ -376,9 +380,6 @@ export default function ResultView({ result, university, major }: ResultViewProp
       enhanceWithGemini()
     }
   }
-
-  // Use enhanced result if available, otherwise use offline preset
-  const displayResult = enhancedResult || result
 
   // Determine threat level for locked section styling
   const isImmediateThreat = displayResult.saturation_year < 2030
