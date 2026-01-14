@@ -490,9 +490,6 @@ export default function ResultView({ result, university, major }: ResultViewProp
               </p>
             </div>
             
-
-            <div className="text-center text-xs text-gray-500 mb-3">or</div>
-            
             {paymentError && (
               <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-xs text-red-600 text-center">{paymentError}</p>
