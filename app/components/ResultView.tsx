@@ -150,11 +150,18 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
   const foundUniversity = findUniversity(university)
   const triggerRef = useRef<HTMLDivElement>(null)
 
   // Premium is always locked by default - require payment/password each time
   // Removed localStorage check so users must unlock every time
+
+  // Ensure component is mounted on client before rendering PayPal
+  // This prevents SSR/client mismatches and double initialization in Strict Mode
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Detect if user is in UK
   useEffect(() => {
@@ -345,14 +352,25 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
 
   // Memoize PayPal provider options to prevent re-initialization
-  // Include funding-eligibility component to enable Apple Pay and other payment methods
+  // Use basic buttons component - enableFunding option is sufficient for Apple Pay
   const paypalOptions = useMemo(() => ({
     clientId,
     currency: isUK ? 'GBP' : 'USD',
     intent: 'capture' as const,
     enableFunding: 'paypal,card,applepay,venmo' as const,
-    components: 'buttons,messages,funding-eligibility' as const,
+    components: 'buttons' as const,
   }), [isUK, clientId])
+
+  // Don't render PayPal until component is mounted on client
+  // This prevents SSR/client mismatches and double initialization in Strict Mode
+  if (!isMounted) {
+    return (
+      <div className="w-full max-w-6xl mx-auto p-8 text-center">
+        <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+        <p className="text-sm text-gray-600 mt-2">Loading...</p>
+      </div>
+    )
+  }
 
   return (
     <PayPalScriptProvider options={paypalOptions}>

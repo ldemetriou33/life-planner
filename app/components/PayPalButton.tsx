@@ -10,56 +10,61 @@ interface PayPalButtonProps {
   onError?: (error: string) => void
 }
 
-// Inner component to access PayPal script state
-// This component must be used within a PayPalScriptProvider
-// Memoized to prevent unnecessary re-renders that could cause buttons to disappear
+/**
+ * PayPalButtonContent - Use this component within a PayPalScriptProvider.
+ * 
+ * IMPORTANT: This component MUST be used within a PayPalScriptProvider.
+ * The default export has been removed to prevent provider conflicts.
+ * 
+ * Memoized to prevent unnecessary re-renders that could cause buttons to disappear.
+ */
 export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalButtonProps) {
   const [{ isResolved, isPending, isRejected }] = usePayPalScriptReducer()
   const [isProcessing, setIsProcessing] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [hasError, setHasError] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
-  // Detect mobile device for optimized button rendering
-  // Only run on client side with proper guards
+  // Ensure component is mounted before accessing browser APIs
   useEffect(() => {
-    // Guard: Only run if window is available (client-side)
-    if (typeof window === 'undefined') return
-
-    const checkMobile = () => {
-      try {
-        // Safely access navigator and window
-        const nav = typeof navigator !== 'undefined' ? navigator : null
-        const win = typeof window !== 'undefined' ? window : null
-        
-        if (!nav || !win) {
-          setIsMobile(false)
-          return
-        }
-
-        const userAgent = nav.userAgent || nav.vendor || (win as any).opera || ''
-        const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
-        const isSmallScreen = win.innerWidth < 768
-        setIsMobile(isMobileDevice || isSmallScreen)
-      } catch (error) {
-        // Fallback: assume desktop if detection fails
-        console.warn('Mobile detection failed, defaulting to desktop:', error)
-        setIsMobile(false)
-      }
-    }
-    
-    checkMobile()
-    
-    // Only add event listener if window is available
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', checkMobile)
-      return () => {
-        if (typeof window !== 'undefined') {
-          window.removeEventListener('resize', checkMobile)
-        }
-      }
-    }
+    setIsMounted(true)
   }, [])
 
-  if (isRejected) {
+  // Simplified mobile detection - only run once after mount
+  // Removed resize listener to reduce re-renders and potential race conditions
+  useEffect(() => {
+    if (!isMounted || typeof window === 'undefined') return
+
+    try {
+      const nav = typeof navigator !== 'undefined' ? navigator : null
+      const win = typeof window !== 'undefined' ? window : null
+      
+      if (!nav || !win) {
+        setIsMobile(false)
+        return
+      }
+
+      const userAgent = nav.userAgent || nav.vendor || (win as any).opera || ''
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
+      const isSmallScreen = win.innerWidth < 768
+      setIsMobile(isMobileDevice || isSmallScreen)
+    } catch (error) {
+      // Fallback: assume desktop if detection fails
+      setIsMobile(false)
+    }
+  }, [isMounted])
+
+  // Don't render until mounted to prevent SSR/client mismatches
+  if (!isMounted) {
+    return (
+      <div className="text-center p-4 min-h-[50px] flex flex-col items-center justify-center">
+        <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mb-2"></div>
+        <p className="text-sm text-gray-600">Loading...</p>
+      </div>
+    )
+  }
+
+  if (isRejected || hasError) {
     return (
       <div className="text-red-500 text-sm text-center p-4 min-h-[50px] flex items-center justify-center">
         Failed to load PayPal. Please refresh the page.
@@ -119,6 +124,7 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
 
   const onErrorHandler = (err: any) => {
     console.error('PayPal error:', err)
+    setHasError(true)
     onError?.('An error occurred with PayPal. Please try again.')
     setIsProcessing(false)
   }
@@ -127,35 +133,7 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     setIsProcessing(false)
   }
 
-  // Log payment method availability for debugging (only in development)
-  // Only run on client side with proper guards
-  useEffect(() => {
-    // Guard: Only run if window is available and in development
-    if (typeof window === 'undefined' || process.env.NODE_ENV !== 'development') return
-    if (!isResolved) return
-
-    try {
-      const nav = typeof navigator !== 'undefined' ? navigator : null
-      const win = typeof window !== 'undefined' ? window : null
-      
-      if (!nav || !win) return
-
-      console.log('💳 PayPal SDK loaded successfully')
-      console.log('📱 Mobile device detected:', isMobile)
-      console.log('🌐 User agent:', nav.userAgent || 'unknown')
-      console.log('🔒 HTTPS:', win.location?.protocol === 'https:')
-      console.log('💵 Currency:', currency)
-      console.log('💰 Amount:', amount)
-      
-      // Check if Apple Pay is potentially available
-      if (isMobile && nav.userAgent && /iphone|ipad|ipod/i.test(nav.userAgent)) {
-        console.log('🍎 Apple device detected - Apple Pay should be available if merchant is approved')
-      }
-    } catch (error) {
-      // Silently fail logging - don't break the app
-      console.warn('Payment method logging failed:', error)
-    }
-  }, [isResolved, isMobile, currency, amount])
+  // Removed logging useEffect to prevent potential errors and improve performance
 
   // Mobile-optimized button height (minimum 50px for Apple Pay)
   // Use safe default with fallback
@@ -178,54 +156,28 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
       )}
       
       {/* Single PayPal Buttons component - PayPal automatically shows Apple Pay when available */}
-      <PayPalButtons
-        createOrder={createOrder}
-        onApprove={onApprove}
-        onError={onErrorHandler}
-        onCancel={onCancel}
-        style={{
-          layout: 'vertical',
-          color: 'gold',
-          shape: 'rect',
-          label: 'pay',
-          height: safeButtonHeight,
-          tagline: false,
-        }}
-        forceReRender={[amount, currency]}
-      />
+      {!hasError && (
+        <PayPalButtons
+          createOrder={createOrder}
+          onApprove={onApprove}
+          onError={onErrorHandler}
+          onCancel={onCancel}
+          style={{
+            layout: 'vertical',
+            color: 'gold',
+            shape: 'rect',
+            label: 'pay',
+            height: safeButtonHeight,
+            tagline: false,
+          }}
+          forceReRender={[amount, currency]}
+        />
+      )}
     </div>
   )
 })
 
-export default function PayPalButton({ amount, currency, onSuccess, onError }: PayPalButtonProps) {
-  // Get client ID from environment variable or use fallback
-  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
-
-  if (!clientId) {
-    return (
-      <div className="text-red-500 text-sm text-center p-4">
-        PayPal client ID not configured. Please restart the development server or add the environment variable.
-      </div>
-    )
-  }
-
-  return (
-    <PayPalScriptProvider 
-      options={{ 
-        clientId, 
-        currency,
-        intent: 'capture',
-        enableFunding: 'paypal,card,applepay,venmo',
-        components: 'buttons',
-      }}
-    >
-      <PayPalButtonContent 
-        amount={amount} 
-        currency={currency} 
-        onSuccess={onSuccess} 
-        onError={onError} 
-      />
-    </PayPalScriptProvider>
-  )
-}
+// Default export removed to prevent provider conflicts
+// Use PayPalButtonContent within an existing PayPalScriptProvider instead
+// If you need a standalone button with its own provider, create a new component
 
