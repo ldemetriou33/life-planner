@@ -14,7 +14,7 @@ export async function GET() {
     }
 
     const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-flash" });
 
     // Simple test prompt
     const testPrompt = "Say 'Gemini is working' in exactly 3 words.";

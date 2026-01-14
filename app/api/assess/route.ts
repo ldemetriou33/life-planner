@@ -72,9 +72,9 @@ export async function POST(req: Request) {
       console.log('Major:', major);
       
       try {
-        // Use gemini-pro (stable model) - gemini-1.5-flash may not be available in all regions/API versions
+        // Use gemini-2.5-flash (latest fast model with schema support)
         const model = genAI.getGenerativeModel({
-          model: "gemini-pro",
+          model: "models/gemini-2.5-flash",
           generationConfig: {
             responseMimeType: "application/json",
             responseSchema: schema,
