@@ -13,6 +13,12 @@ export const metadata: Metadata = {
   description: 'Get an honest assessment of your career path based on your university and major',
   themeColor: '#ffffff',
   metadataBase: new URL('https://universitycheck.xyz'),
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
   alternates: {
     canonical: '/',
   },

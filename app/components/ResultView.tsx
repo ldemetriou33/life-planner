@@ -330,12 +330,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
 
   // Memoize PayPal provider options to prevent re-initialization
+  // Include funding-eligibility component to enable Apple Pay and other payment methods
   const paypalOptions = useMemo(() => ({
     clientId,
     currency: isUK ? 'GBP' : 'USD',
     intent: 'capture' as const,
     enableFunding: 'paypal,card,applepay,venmo' as const,
-    components: 'buttons' as const,
+    components: 'buttons,messages,funding-eligibility' as const,
   }), [isUK, clientId])
 
   return (

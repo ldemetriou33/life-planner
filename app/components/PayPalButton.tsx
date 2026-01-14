@@ -1,7 +1,7 @@
 'use client'
 
 import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js'
-import { useState, memo } from 'react'
+import { useState, memo, useEffect } from 'react'
 
 interface PayPalButtonProps {
   amount: number
@@ -16,6 +16,21 @@ interface PayPalButtonProps {
 export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, currency, onSuccess, onError }: PayPalButtonProps) {
   const [{ isResolved, isPending, isRejected }] = usePayPalScriptReducer()
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile device for optimized button rendering
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
+      const isSmallScreen = window.innerWidth < 768
+      setIsMobile(isMobileDevice || isSmallScreen)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   if (isRejected) {
     return (
@@ -83,8 +98,33 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     setIsProcessing(false)
   }
 
+  // Log payment method availability for debugging (only in development)
+  useEffect(() => {
+    if (isResolved && process.env.NODE_ENV === 'development') {
+      console.log('💳 PayPal SDK loaded successfully')
+      console.log('📱 Mobile device detected:', isMobile)
+      console.log('🌐 User agent:', navigator.userAgent)
+      console.log('🔒 HTTPS:', window.location.protocol === 'https:')
+      console.log('💵 Currency:', currency)
+      console.log('💰 Amount:', amount)
+      
+      // Check if Apple Pay is potentially available
+      if (isMobile && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
+        console.log('🍎 Apple device detected - Apple Pay should be available if merchant is approved')
+      }
+    }
+  }, [isResolved, isMobile, currency, amount])
+
+  // Mobile-optimized button height (minimum 50px for Apple Pay)
+  const buttonHeight = isMobile ? 55 : 50
+
   return (
-    <div className="w-full min-h-[50px]">
+    <div className="w-full min-h-[50px]" style={{ 
+      minHeight: `${buttonHeight}px`,
+      // Ensure no CSS transforms interfere with iframe rendering
+      transform: 'none',
+      willChange: 'auto'
+    }}>
       {isProcessing && (
         <div className="mb-2 text-center text-sm text-gray-600">
           Processing payment...
@@ -98,11 +138,11 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         onError={onErrorHandler}
         onCancel={onCancel}
         style={{
-          layout: 'vertical',
+          layout: isMobile ? 'vertical' : 'vertical',
           color: 'gold',
           shape: 'rect',
           label: 'pay',
-          height: 50,
+          height: buttonHeight,
           tagline: false,
         }}
         forceReRender={[amount, currency]}
