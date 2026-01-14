@@ -150,6 +150,8 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [enhancedResult, setEnhancedResult] = useState<SingularityResult | null>(null)
+  const [isEnhancing, setIsEnhancing] = useState(false)
   const foundUniversity = findUniversity(university)
   const triggerRef = useRef<HTMLDivElement>(null)
 
@@ -261,14 +263,14 @@ export default function ResultView({ result, university, major }: ResultViewProp
 
   // Verdict styling based on score - Cyber-Minimalist colors
   const getVerdictStyle = () => {
-    if (result.singularity_score >= 80) {
+    if (displayResult.singularity_score >= 80) {
       return {
         text: 'text-cyan-400',
         border: 'border-cyan-400/30',
         bg: 'bg-cyan-400/10',
         shadowColor: 'rgba(34, 211, 238, 0.5)',
       }
-    } else if (result.singularity_score >= 50) {
+    } else if (displayResult.singularity_score >= 50) {
       return {
         text: 'text-orange-600',
         border: 'border-orange-500/40',
@@ -287,11 +289,43 @@ export default function ResultView({ result, university, major }: ResultViewProp
 
   const verdictStyle = getVerdictStyle()
 
+  // Function to enhance result with Gemini AI
+  const enhanceWithGemini = async () => {
+    setIsEnhancing(true)
+    try {
+      const response = await fetch('/api/assess/enhance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ university, major }),
+      })
+
+      if (response.ok) {
+        const enhanced = await response.json()
+        setEnhancedResult(enhanced)
+        console.log('✅ Enhanced with Gemini AI')
+      } else {
+        console.warn('⚠️ Gemini enhancement failed, using offline preset')
+        // Keep offline preset - already revealed
+      }
+    } catch (error) {
+      console.error('Error enhancing with Gemini:', error)
+      // Keep offline preset - already revealed
+    } finally {
+      setIsEnhancing(false)
+    }
+  }
+
   // PayPal payment success handler
   const handlePaymentSuccess = () => {
-    setIsPremium(true)
+    setIsPremium(true) // Reveal offline preset immediately
     setIsProcessingPayment(false)
     setPaymentError(null)
+    
+    // Call Gemini enhancement in background
+    enhanceWithGemini()
+    
     // Scroll to premium content (only on client side)
     if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       setTimeout(() => {
@@ -312,11 +346,14 @@ export default function ResultView({ result, university, major }: ResultViewProp
     setPasswordError(null)
     
     if (password === FREE_ACCESS_PASSWORD || password === UNI_PASSWORD) {
-      setIsPremium(true)
+      setIsPremium(true) // Reveal offline preset immediately
       if (typeof window !== 'undefined') {
         localStorage.setItem('premium_unlocked', 'true')
       }
       setPassword('')
+      
+      // Call Gemini enhancement in background
+      enhanceWithGemini()
     } else {
       setPasswordError('Incorrect password')
     }
@@ -329,29 +366,37 @@ export default function ResultView({ result, university, major }: ResultViewProp
     const enteredPassword = input?.value || ''
     
     if (enteredPassword === UNI_PASSWORD) {
-      setIsPremium(true)
+      setIsPremium(true) // Reveal offline preset immediately
       if (typeof window !== 'undefined') {
         localStorage.setItem('premium_unlocked', 'true')
       }
       input.value = ''
+      
+      // Call Gemini enhancement in background
+      enhanceWithGemini()
     }
   }
 
+  // Use enhanced result if available, otherwise use offline preset
+  const displayResult = enhancedResult || result
+
   // Determine threat level for locked section styling
-  const isImmediateThreat = result.saturation_year < 2030
-  const isMidTermThreat = result.saturation_year >= 2030 && result.saturation_year <= 2038
+  const isImmediateThreat = displayResult.saturation_year < 2030
+  const isMidTermThreat = displayResult.saturation_year >= 2030 && displayResult.saturation_year <= 2038
 
   // Get client ID from environment variable or use fallback
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
 
   // Memoize PayPal provider options to prevent re-initialization
-  // Use basic buttons component - enableFunding option is sufficient for Apple Pay
+  // Enhanced mobile support with all payment methods
   const paypalOptions = useMemo(() => ({
     clientId,
     currency: isUK ? 'GBP' : 'USD',
     intent: 'capture' as const,
-    enableFunding: 'paypal,card,applepay,venmo' as const,
-    components: 'buttons' as const,
+    enableFunding: 'paypal,card,applepay,venmo,paylater' as const,
+    components: 'buttons,messages,funding-eligibility' as const,
+    // Mobile-specific optimizations
+    dataNamespace: 'paypal-buttons',
   }), [isUK, clientId])
 
   // Check if we're on client side (more efficient than useEffect)
@@ -387,9 +432,9 @@ export default function ResultView({ result, university, major }: ResultViewProp
 
       {/* Header: Survival Gauge and Verdict Banner - matching old layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-        <div className="lg:col-span-1">
-          <SurvivalGauge score={result.singularity_score} />
-        </div>
+            <div className="lg:col-span-1">
+              <SurvivalGauge score={displayResult.singularity_score} />
+            </div>
         <div className="lg:col-span-2">
           <motion.div
             variants={{
@@ -406,18 +451,18 @@ export default function ResultView({ result, university, major }: ResultViewProp
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold ${verdictStyle.text} leading-tight tracking-wider`}
-              style={{
-                filter: result.singularity_score >= 50 && result.singularity_score < 80 
-                  ? `drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))`
-                  : `drop-shadow(0 0 4px ${verdictStyle.shadowColor})`,
-                textShadow: result.singularity_score >= 50 && result.singularity_score < 80
-                  ? `0 2px 4px rgba(0, 0, 0, 0.3), 0 0 8px ${verdictStyle.shadowColor}`
-                  : `0 0 8px ${verdictStyle.shadowColor}, 0 2px 4px rgba(0, 0, 0, 0.2)`,
-                letterSpacing: '0.05em',
-              }}
-            >
-              {result.verdict.toUpperCase()}
+                  className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold ${verdictStyle.text} leading-tight tracking-wider`}
+                  style={{
+                    filter: displayResult.singularity_score >= 50 && displayResult.singularity_score < 80 
+                      ? `drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))`
+                      : `drop-shadow(0 0 4px ${verdictStyle.shadowColor})`,
+                    textShadow: displayResult.singularity_score >= 50 && displayResult.singularity_score < 80
+                      ? `0 2px 4px rgba(0, 0, 0, 0.3), 0 0 8px ${verdictStyle.shadowColor}`
+                      : `0 0 8px ${verdictStyle.shadowColor}, 0 2px 4px rgba(0, 0, 0, 0.2)`,
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  {displayResult.verdict.toUpperCase()}
             </motion.h2>
           </motion.div>
         </div>
@@ -431,13 +476,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
         }}
         className="w-full"
       >
-        <ShareScoreButton
-          score={result.singularity_score}
-          verdict={result.verdict}
-          university={university}
-          major={major}
-          zone={result.singularity_score >= 80 ? 'Safe Zone' : result.singularity_score >= 50 ? 'Caution Zone' : 'Danger Zone'}
-        />
+            <ShareScoreButton
+              score={displayResult.singularity_score}
+              verdict={displayResult.verdict}
+              university={university}
+              major={major}
+              zone={displayResult.singularity_score >= 80 ? 'Safe Zone' : displayResult.singularity_score >= 50 ? 'Caution Zone' : 'Danger Zone'}
+            />
       </motion.div>
 
       {/* MOBILE PAYMENT BOX - Appears after share section, sticky after scroll */}
@@ -541,8 +586,8 @@ export default function ResultView({ result, university, major }: ResultViewProp
         <div className={`space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8 ${!isPremium ? 'filter blur-[6px] lg:blur-[2px] pointer-events-none' : ''}`}>
           {/* Human Moat and Timeline - Show full content so users can see there's a lot locked */}
           <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 ${!isPremium ? 'lg:block' : ''}`}>
-            <HumanMoatIndicator level={result.human_moat} />
-            <SaturationTimeline saturationYear={result.saturation_year} showOnlyPhase1={!isPremium} />
+            <HumanMoatIndicator level={displayResult.human_moat} />
+            <SaturationTimeline saturationYear={displayResult.saturation_year} showOnlyPhase1={!isPremium} />
           </div>
 
           {/* Timeline Context and Pivot Strategy - Show on mobile so users see locked content */}
@@ -558,7 +603,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
               <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-3 md:mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
                 Timeline Context
               </h3>
-              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{result.timeline_context}</p>
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{displayResult.timeline_context}</p>
             </motion.div>
 
             <motion.div
@@ -572,7 +617,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
               <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-3 md:mb-4 bg-gradient-to-r from-electric-blue to-neon-purple bg-clip-text text-transparent">
                 Pivot Strategy
               </h3>
-              <p className="text-sm sm:text-base text-gray-800 leading-relaxed">{result.pivot_strategy}</p>
+              <p className="text-sm sm:text-base text-gray-800 leading-relaxed">{displayResult.pivot_strategy}</p>
             </motion.div>
           </div>
 
@@ -643,7 +688,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
           </motion.div>
 
           {/* Premium Sections: Upskilling Roadmap, Human Moat Triggers, Recommended Tools - Show on mobile so users see locked content */}
-          {result.upskillingRoadmap && result.upskillingRoadmap.length > 0 && (
+          {displayResult.upskillingRoadmap && displayResult.upskillingRoadmap.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
               {/* Upskilling Roadmap */}
               <motion.div
@@ -663,7 +708,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                   </h3>
                 </div>
                 <ul className="space-y-3">
-                  {result.upskillingRoadmap.map((skill, index) => (
+                  {displayResult.upskillingRoadmap.map((skill, index) => (
                     <li key={index} className="flex items-start gap-3">
                       <span className="mt-1.5 w-2 h-2 rounded-full bg-electric-blue flex-shrink-0" />
                       <span className="text-gray-700 text-sm leading-relaxed">{skill}</span>
@@ -673,7 +718,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
               </motion.div>
 
               {/* Human Moat Triggers */}
-              {result.humanMoatTriggers && result.humanMoatTriggers.length > 0 && (
+              {displayResult.humanMoatTriggers && displayResult.humanMoatTriggers.length > 0 && (
                 <motion.div
                   variants={{
                     hidden: { opacity: 0, y: 20 },
@@ -691,7 +736,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                     </h3>
                   </div>
                   <ul className="space-y-3">
-                    {result.humanMoatTriggers.map((trigger, index) => (
+                    {displayResult.humanMoatTriggers.map((trigger, index) => (
                       <li key={index} className="flex items-start gap-3">
                         <span className="mt-1.5 w-2 h-2 rounded-full bg-cyan-400 flex-shrink-0" />
                         <span className="text-gray-700 text-sm leading-relaxed">{trigger}</span>
@@ -702,7 +747,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
               )}
 
               {/* Recommended Tools */}
-              {result.recommendedTools && result.recommendedTools.length > 0 && (
+              {displayResult.recommendedTools && displayResult.recommendedTools.length > 0 && (
                 <motion.div
                   variants={{
                     hidden: { opacity: 0, y: 20 },
@@ -720,7 +765,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
                     </h3>
                   </div>
                   <ul className="space-y-4">
-                    {result.recommendedTools.map((tool, index) => (
+                    {displayResult.recommendedTools.map((tool, index) => (
                       <li key={index} className="border-l-2 border-neon-purple/50 pl-4">
                         <h4 className="font-semibold text-gray-900 mb-1">{tool.name}</h4>
                         <p className="text-gray-600 text-sm leading-relaxed">{tool.description}</p>

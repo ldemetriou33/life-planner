@@ -58,97 +58,14 @@ export async function POST(req: Request) {
   try {
     const { email, university, major } = await req.json();
 
-    // Store email to file
+    // Store email non-blocking (fire-and-forget)
     if (email) {
-      await saveEmail(email, university, major)
+      saveEmail(email, university, major).catch(err => console.error('Email save failed:', err))
     }
 
     // ---------------------------------------------------------
-    // STRATEGY A: REAL AI (GOOGLE GEMINI)
-    // ---------------------------------------------------------
-    if (genAI) {
-      console.log('🤖 Using Gemini AI for assessment...');
-      console.log('University:', university);
-      console.log('Major:', major);
-      
-      try {
-        // Use gemini-2.5-flash (latest fast model with schema support)
-        const model = genAI.getGenerativeModel({
-          model: "models/gemini-2.5-flash",
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: schema,
-          },
-        });
-
-        const prompt = `
-        Analyze this career path for the Singularity Era (2025-2035) based on BOTH the university AND major.
-        
-        University: ${university}
-        Major: ${major}
-        
-        IMPORTANT: Consider BOTH factors:
-        - University prestige/reputation affects networking, opportunities, and career trajectory
-        - Major/degree determines the core skill set and AI vulnerability
-        
-        Scoring Rules (base scores, adjust ±5 based on university prestige):
-        - "Business/Management" -> Base Score ~65-75. Obsolescence: ~2032. Moat: Medium.
-        - "CS/Coding/Data" -> Base Score ~40-60. Obsolescence: ~2029. Moat: Low.
-        - "Nursing/Trades/Health" -> Base Score ~90+. Obsolescence: 2045+. Moat: High.
-        - Top-tier universities (Ivy League, Oxbridge, etc.) add +3-5 to score
-        - Lower-tier universities subtract -2-3 from score
-        
-        Provide a comprehensive analysis including:
-        - singularity_score (0-100): Overall AI resistance score
-        - human_moat ("High"/"Medium"/"Low"): Level of protection from AI
-        - saturation_year (2026-2045): When AI will fully replace this role
-        - verdict (string): A dramatic, memorable verdict name (e.g., "The Laptop Purge", "The Middleman Massacre")
-        - timeline_context (string): Explanation of when and why this role becomes obsolete
-        - pivot_strategy (string): Specific, actionable advice for pivoting to AI-resistant roles
-        - upskillingRoadmap (array of strings): 5 specific skills to develop, ordered by priority
-        - humanMoatTriggers (array of strings): 4-5 specific human advantages that protect this role from AI
-        - recommendedTools (array of objects): 3-4 tools/platforms to help with the pivot, each with name, description, and optional url
-        
-        Make the analysis specific to ${university} and ${major}. Consider how the university's reputation and network affects career trajectory.
-        `;
-
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        const data = JSON.parse(text);
-        
-        // Validate Gemini response has all required fields
-        if (!data.singularity_score || !data.verdict || !data.upskillingRoadmap) {
-          console.warn("⚠️ Gemini response missing required fields, falling back to offline");
-          throw new Error("Incomplete Gemini response");
-        }
-        
-        console.log('✅ Gemini AI successfully generated assessment');
-        console.log('Score:', data.singularity_score);
-        console.log('Verdict:', data.verdict);
-        
-        // Save assessment for statistics
-        await saveAssessment(data.singularity_score, major, university);
-        
-        // Mark that this was AI-generated
-        const aiGeneratedData = {
-          ...data,
-          _source: 'gemini-ai' // Internal flag to track AI vs preset
-        };
-        
-        // Return Real Data
-        return NextResponse.json(aiGeneratedData);
-      } catch (geminiError) {
-        console.error("❌ Gemini Failed (Falling back to offline):", geminiError);
-        console.error("Error details:", geminiError instanceof Error ? geminiError.message : String(geminiError));
-        // Fall through to offline logic below...
-      }
-    } else {
-      console.log('⚠️ Gemini AI not configured - using offline preset system');
-      console.log('To enable Gemini, set GEMINI_API_KEY environment variable');
-    }
-
-    // ---------------------------------------------------------
-    // STRATEGY B: OFFLINE BRAIN (6-PHASE EXTINCTION ENGINE)
+    // OFFLINE BRAIN (6-PHASE EXTINCTION ENGINE)
+    // Always return offline preset immediately - Gemini enhancement happens after payment/password
     // ---------------------------------------------------------
     
     const input = major.toLowerCase();
@@ -429,8 +346,8 @@ export async function POST(req: Request) {
     // Cap score at 100
     if (data.singularity_score > 100) data.singularity_score = 100;
 
-    // Save assessment for statistics
-    await saveAssessment(data.singularity_score, major, university);
+    // Save assessment for statistics (non-blocking, fire-and-forget)
+    saveAssessment(data.singularity_score, major, university).catch(err => console.error('Assessment save failed:', err));
 
     // Mark that this was from offline preset
     const offlineData = {
@@ -438,13 +355,11 @@ export async function POST(req: Request) {
       _source: 'offline-preset' // Internal flag to track AI vs preset
     };
 
-    console.log('📋 Using offline preset system');
+    console.log('📋 Using offline preset system (instant response)');
     console.log('Score:', offlineData.singularity_score);
     console.log('Verdict:', offlineData.verdict);
-
-    // Simulate Network Latency
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     
+    // Return immediately - no delays
     return NextResponse.json(offlineData);
 
   } catch (error) {

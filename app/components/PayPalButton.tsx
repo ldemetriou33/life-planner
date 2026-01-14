@@ -98,25 +98,75 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
 
   const onApprove = async (data: any, actions: any) => {
     setIsProcessing(true)
+    setHasError(false) // Reset error state
+    
     try {
-      const order = await actions.order.capture()
+      // For mobile, sometimes order.capture() needs retry logic
+      let order
+      let retries = 0
+      const maxRetries = 2
+      
+      while (retries <= maxRetries) {
+        try {
+          order = await actions.order.capture()
+          break // Success, exit retry loop
+        } catch (captureError: any) {
+          console.warn(`PayPal capture attempt ${retries + 1} failed:`, captureError)
+          
+          // Check for specific mobile errors
+          if (captureError?.message?.includes('network') || captureError?.message?.includes('timeout')) {
+            if (retries < maxRetries) {
+              retries++
+              // Wait before retry (exponential backoff)
+              await new Promise(resolve => setTimeout(resolve, 1000 * retries))
+              continue
+            }
+          }
+          
+          // If it's not a network error or we've exhausted retries, throw
+          throw captureError
+        }
+      }
+      
+      if (!order) {
+        throw new Error('Failed to capture order after retries')
+      }
       
       // Payment successful
       if (order.status === 'COMPLETED') {
         // Store payment in localStorage (only on client side)
         if (typeof window !== 'undefined') {
-          localStorage.setItem('premium_unlocked', 'true')
-          localStorage.setItem('payment_id', order.id)
-          localStorage.setItem('payment_timestamp', Date.now().toString())
+          try {
+            localStorage.setItem('premium_unlocked', 'true')
+            localStorage.setItem('payment_id', order.id)
+            localStorage.setItem('payment_timestamp', Date.now().toString())
+          } catch (storageError) {
+            console.warn('Failed to save payment to localStorage:', storageError)
+            // Don't fail payment if localStorage fails
+          }
         }
         
         onSuccess()
       } else {
-        throw new Error('Payment not completed')
+        throw new Error(`Payment status: ${order.status}`)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('PayPal payment error:', error)
-      onError?.('Payment failed. Please try again.')
+      
+      // Provide more specific error messages for mobile
+      let errorMessage = 'Payment failed. Please try again.'
+      if (isMobile) {
+        if (error?.message?.includes('network') || error?.message?.includes('timeout')) {
+          errorMessage = 'Network error. Please check your connection and try again.'
+        } else if (error?.message?.includes('cancel')) {
+          errorMessage = 'Payment was cancelled.'
+        } else {
+          errorMessage = 'Payment failed on mobile. Please try again or use a different payment method.'
+        }
+      }
+      
+      setHasError(true)
+      onError?.(errorMessage)
     } finally {
       setIsProcessing(false)
     }
@@ -125,7 +175,20 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   const onErrorHandler = (err: any) => {
     console.error('PayPal error:', err)
     setHasError(true)
-    onError?.('An error occurred with PayPal. Please try again.')
+    
+    // Provide more specific error messages
+    let errorMessage = 'An error occurred with PayPal. Please try again.'
+    if (isMobile) {
+      if (err?.message?.includes('network') || err?.message?.includes('timeout')) {
+        errorMessage = 'Network error. Please check your connection and try again.'
+      } else if (err?.message?.includes('popup')) {
+        errorMessage = 'Popup blocked. Please allow popups and try again.'
+      } else {
+        errorMessage = 'Mobile payment error. Please try again or use a different payment method.'
+      }
+    }
+    
+    onError?.(errorMessage)
     setIsProcessing(false)
   }
 
@@ -143,12 +206,15 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   const safeButtonHeight = typeof buttonHeight === 'number' && buttonHeight > 0 ? buttonHeight : 50
 
   return (
-    <div className="w-full min-h-[50px]" style={{ 
-      minHeight: `${safeButtonHeight}px`,
-      // Ensure no CSS transforms interfere with iframe rendering
-      transform: 'none',
-      willChange: 'auto'
-    }}>
+    <div 
+      className="w-full min-h-[50px]" 
+      data-namespace="paypal-buttons"
+      style={{ 
+        minHeight: `${safeButtonHeight}px`,
+        // Ensure no CSS transforms interfere with iframe rendering
+        transform: 'none',
+        willChange: 'auto'
+      }}>
       {isProcessing && (
         <div className="mb-2 text-center text-sm text-gray-600">
           Processing payment...
