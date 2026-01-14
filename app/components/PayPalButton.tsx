@@ -24,6 +24,7 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   const [isMobile, setIsMobile] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
 
   // Ensure component is mounted before accessing browser APIs
   useEffect(() => {
@@ -64,10 +65,16 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     )
   }
 
-  if (isRejected || hasError) {
+  if (isRejected) {
     return (
-      <div className="text-red-500 text-sm text-center p-4 min-h-[50px] flex items-center justify-center">
-        Failed to load PayPal. Please refresh the page.
+      <div className="text-red-500 text-sm text-center p-4 min-h-[50px] flex flex-col items-center justify-center gap-2">
+        <p>Failed to load PayPal. Please refresh the page.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+        >
+          Refresh Page
+        </button>
       </div>
     )
   }
@@ -99,41 +106,84 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   const onApprove = async (data: any, actions: any) => {
     setIsProcessing(true)
     setHasError(false) // Reset error state
+    setPaymentError(null) // Clear previous error message
     
     try {
-      // For mobile, sometimes order.capture() needs retry logic
+      // Validate actions and order object exist (critical for mobile)
+      if (!actions || !actions.order) {
+        console.error('PayPal actions or order object is missing')
+        throw new Error('Payment system error. Please refresh and try again.')
+      }
+
+      // For mobile, get order details first to verify it exists
+      let orderDetails
+      try {
+        if (actions.order.get) {
+          orderDetails = await actions.order.get()
+          console.log('Order details retrieved:', orderDetails?.id)
+        }
+      } catch (getError: any) {
+        console.warn('Failed to get order details (non-critical):', getError)
+        // Continue anyway - capture might still work
+      }
+
+      // Capture order with retry logic for mobile network issues
       let order
       let retries = 0
-      const maxRetries = 2
+      const maxRetries = 3 // Increased to 3 attempts
+      const timeout = isMobile ? 15000 : 10000 // Longer timeout for mobile
       
-      while (retries <= maxRetries) {
+      while (retries < maxRetries) {
         try {
-          order = await actions.order.capture()
+          // Add timeout wrapper for mobile
+          const capturePromise = actions.order.capture()
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Capture timeout')), timeout)
+          )
+          
+          order = await Promise.race([capturePromise, timeoutPromise]) as any
+          
+          console.log(`✅ Payment captured successfully on attempt ${retries + 1}`)
           break // Success, exit retry loop
         } catch (captureError: any) {
-          console.warn(`PayPal capture attempt ${retries + 1} failed:`, captureError)
+          const errorMsg = captureError?.message || String(captureError)
+          const errorCode = captureError?.code || ''
           
-          // Check for specific mobile errors
-          if (captureError?.message?.includes('network') || captureError?.message?.includes('timeout')) {
-            if (retries < maxRetries) {
-              retries++
-              // Wait before retry (exponential backoff)
-              await new Promise(resolve => setTimeout(resolve, 1000 * retries))
-              continue
-            }
+          console.warn(`PayPal capture attempt ${retries + 1}/${maxRetries} failed:`, {
+            message: errorMsg,
+            code: errorCode,
+            error: captureError
+          })
+          
+          // Check for retryable errors
+          const isRetryable = 
+            errorMsg.toLowerCase().includes('network') ||
+            errorMsg.toLowerCase().includes('timeout') ||
+            errorMsg.toLowerCase().includes('connection') ||
+            errorCode === 'NETWORK_ERROR' ||
+            errorCode === 'TIMEOUT'
+          
+          if (isRetryable && retries < maxRetries - 1) {
+            retries++
+            const backoffDelay = 1000 * retries // Exponential backoff: 1s, 2s, 3s
+            console.log(`Retrying in ${backoffDelay}ms...`)
+            await new Promise(resolve => setTimeout(resolve, backoffDelay))
+            continue
           }
           
-          // If it's not a network error or we've exhausted retries, throw
+          // If not retryable or max retries reached, throw
           throw captureError
         }
       }
       
       if (!order) {
-        throw new Error('Failed to capture order after retries')
+        throw new Error('Failed to capture order after all retry attempts')
       }
       
       // Payment successful
       if (order.status === 'COMPLETED') {
+        console.log('✅ Payment completed successfully:', order.id)
+        
         // Store payment in localStorage (only on client side)
         if (typeof window !== 'undefined') {
           try {
@@ -148,24 +198,36 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         
         onSuccess()
       } else {
+        console.error('Payment not completed. Status:', order.status)
         throw new Error(`Payment status: ${order.status}`)
       }
     } catch (error: any) {
-      console.error('PayPal payment error:', error)
+      console.error('PayPal payment error:', {
+        message: error?.message,
+        code: error?.code,
+        error: error,
+        isMobile,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+      })
       
       // Provide more specific error messages for mobile
       let errorMessage = 'Payment failed. Please try again.'
       if (isMobile) {
-        if (error?.message?.includes('network') || error?.message?.includes('timeout')) {
+        const errorMsg = error?.message?.toLowerCase() || ''
+        if (errorMsg.includes('network') || errorMsg.includes('timeout') || errorMsg.includes('connection')) {
           errorMessage = 'Network error. Please check your connection and try again.'
-        } else if (error?.message?.includes('cancel')) {
+        } else if (errorMsg.includes('cancel')) {
           errorMessage = 'Payment was cancelled.'
+        } else if (errorMsg.includes('timeout')) {
+          errorMessage = 'Payment timed out. Please try again with a better connection.'
         } else {
-          errorMessage = 'Payment failed on mobile. Please try again or use a different payment method.'
+          errorMessage = 'Payment failed. Please try again or use a different payment method.'
         }
       }
       
-      setHasError(true)
+      // Set error state but allow retry (buttons will still be shown)
+      setPaymentError(errorMessage)
+      setHasError(true) // Set error to show retry message, but buttons remain
       onError?.(errorMessage)
     } finally {
       setIsProcessing(false)
@@ -173,18 +235,42 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }
 
   const onErrorHandler = (err: any) => {
-    console.error('PayPal error:', err)
-    setHasError(true)
+    const errorMsg = err?.message || String(err)
+    const errorCode = err?.code || ''
+    
+    console.error('PayPal error handler:', {
+      message: errorMsg,
+      code: errorCode,
+      error: err,
+      isMobile,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+    })
+    
+    // Don't immediately set hasError for recoverable errors - allow retry
+    const isRecoverable = 
+      errorMsg.toLowerCase().includes('network') ||
+      errorMsg.toLowerCase().includes('timeout') ||
+      errorMsg.toLowerCase().includes('connection') ||
+      errorCode === 'NETWORK_ERROR'
+    
+    if (!isRecoverable) {
+      setHasError(true)
+    }
     
     // Provide more specific error messages
     let errorMessage = 'An error occurred with PayPal. Please try again.'
     if (isMobile) {
-      if (err?.message?.includes('network') || err?.message?.includes('timeout')) {
+      if (errorMsg.toLowerCase().includes('network') || errorMsg.toLowerCase().includes('timeout') || errorMsg.toLowerCase().includes('connection')) {
         errorMessage = 'Network error. Please check your connection and try again.'
-      } else if (err?.message?.includes('popup')) {
+      } else if (errorMsg.toLowerCase().includes('popup') || errorMsg.toLowerCase().includes('blocked')) {
         errorMessage = 'Popup blocked. Please allow popups and try again.'
+      } else if (errorMsg.toLowerCase().includes('cancel')) {
+        errorMessage = 'Payment was cancelled.'
+        // Don't show as error for cancelled payments
+        setIsProcessing(false)
+        return
       } else {
-        errorMessage = 'Mobile payment error. Please try again or use a different payment method.'
+        errorMessage = 'Payment error. Please try again or use a different payment method.'
       }
     }
     
@@ -193,7 +279,10 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }
 
   const onCancel = () => {
+    console.log('Payment cancelled by user')
     setIsProcessing(false)
+    setHasError(false) // Reset error state on cancel
+    // Don't call onError for cancellations - it's user-initiated
   }
 
   // Removed logging useEffect to prevent potential errors and improve performance
@@ -221,24 +310,40 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         </div>
       )}
       
-      {/* Single PayPal Buttons component - PayPal automatically shows Apple Pay when available */}
-      {!hasError && (
-        <PayPalButtons
-          createOrder={createOrder}
-          onApprove={onApprove}
-          onError={onErrorHandler}
-          onCancel={onCancel}
-          style={{
-            layout: 'vertical',
-            color: 'gold',
-            shape: 'rect',
-            label: 'pay',
-            height: safeButtonHeight,
-            tagline: false,
-          }}
-          forceReRender={[amount, currency]}
-        />
+      {/* Show error message with retry option if payment failed */}
+      {hasError && paymentError && (
+        <div className="mb-2">
+          <div className="text-red-500 text-xs text-center p-2 bg-red-50 rounded mb-1">
+            {paymentError}
+          </div>
+          <div 
+            onClick={() => {
+              setHasError(false)
+              setPaymentError(null)
+            }}
+            className="text-xs text-center text-blue-600 hover:text-blue-700 cursor-pointer"
+          >
+            Click to try again
+          </div>
+        </div>
       )}
+      
+      {/* Single PayPal Buttons component - PayPal automatically shows Apple Pay when available */}
+      <PayPalButtons
+        createOrder={createOrder}
+        onApprove={onApprove}
+        onError={onErrorHandler}
+        onCancel={onCancel}
+        style={{
+          layout: 'vertical',
+          color: 'gold',
+          shape: 'rect',
+          label: 'pay',
+          height: safeButtonHeight,
+          tagline: false,
+        }}
+        forceReRender={[amount, currency, hasError]}
+      />
     </div>
   )
 })

@@ -389,16 +389,20 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
 
   // Memoize PayPal provider options to prevent re-initialization
-  // Enhanced mobile support with all payment methods
-  const paypalOptions = useMemo(() => ({
-    clientId,
-    currency: isUK ? 'GBP' : 'USD',
-    intent: 'capture' as const,
-    enableFunding: 'paypal,card,applepay,venmo,paylater' as const,
-    components: 'buttons,messages,funding-eligibility' as const,
-    // Mobile-specific optimizations
-    dataNamespace: 'paypal-buttons',
-  }), [isUK, clientId])
+  // Enhanced mobile support with optimized configuration
+  const paypalOptions = useMemo(() => {
+    const options: any = {
+      clientId,
+      currency: isUK ? 'GBP' : 'USD',
+      intent: 'capture' as const,
+      enableFunding: 'paypal,card,applepay,venmo' as const, // Removed paylater which can cause issues on mobile
+      components: 'buttons' as const, // Simplified - removed messages and funding-eligibility for better mobile performance
+      // Mobile-specific optimizations
+      // Removed dataNamespace as it can cause issues on some mobile browsers
+    }
+    
+    return options
+  }, [isUK, clientId])
 
   // Check if we're on client side (more efficient than useEffect)
   // This prevents SSR/client mismatches and double initialization in Strict Mode
