@@ -344,13 +344,6 @@ export default function ResultView({ result, university, major }: ResultViewProp
   // Get client ID from environment variable or use fallback
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
 
-  // Track if we're on the client side
-  const [isClient, setIsClient] = useState(false)
-
-  useEffect(() => {
-    setIsClient(typeof window !== 'undefined')
-  }, [])
-
   // Memoize PayPal provider options to prevent re-initialization
   // Include funding-eligibility component to enable Apple Pay and other payment methods
   const paypalOptions = useMemo(() => ({
@@ -362,7 +355,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
   }), [isUK, clientId])
 
   return (
-    <PayPalScriptProvider options={paypalOptions} key={isClient ? 'client' : 'server'}>
+    <PayPalScriptProvider options={paypalOptions}>
     <motion.div
       variants={containerVariants}
       initial="hidden"
