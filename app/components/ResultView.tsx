@@ -356,6 +356,22 @@ export default function ResultView({ result, university, major }: ResultViewProp
   // Get client ID from environment variable or use fallback
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
 
+  // Detect mobile for PayPal configuration
+  const [isMobileDevice, setIsMobileDevice] = useState(false)
+  
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return
+    
+    try {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera || ''
+      const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
+      const isSmallScreen = window.innerWidth < 768
+      setIsMobileDevice(isMobile || isSmallScreen)
+    } catch (error) {
+      setIsMobileDevice(false)
+    }
+  }, [])
+
   // Memoize PayPal provider options to prevent re-initialization
   // Enhanced mobile support with optimized configuration
   const paypalOptions = useMemo(() => {
@@ -363,14 +379,24 @@ export default function ResultView({ result, university, major }: ResultViewProp
       clientId,
       currency: isUK ? 'GBP' : 'USD',
       intent: 'capture' as const,
-      enableFunding: 'paypal,card,applepay,venmo' as const, // Removed paylater which can cause issues on mobile
-      components: 'buttons' as const, // Simplified - removed messages and funding-eligibility for better mobile performance
+      enableFunding: 'paypal,card,applepay,venmo' as const, // Mobile payment methods
+      components: 'buttons' as const, // Simplified for better mobile performance
       // Mobile-specific optimizations
-      // Removed dataNamespace as it can cause issues on some mobile browsers
+      // No dataNamespace - can cause mobile popup issues
+    }
+    
+    // Add mobile-specific options
+    if (isMobileDevice) {
+      // Ensure proper locale for mobile
+      const locale = typeof navigator !== 'undefined' ? navigator.language : 'en_US'
+      options.locale = locale
+      
+      // Disable funding methods that might cause issues on mobile
+      // Keep only essential ones
     }
     
     return options
-  }, [isUK, clientId])
+  }, [isUK, clientId, isMobileDevice])
 
   // Check if we're on client side (more efficient than useEffect)
   // This prevents SSR/client mismatches and double initialization in Strict Mode

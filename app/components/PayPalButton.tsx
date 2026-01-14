@@ -287,22 +287,45 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
 
   // Removed logging useEffect to prevent potential errors and improve performance
 
-  // Mobile-optimized button height (minimum 50px for Apple Pay)
+  // Mobile-optimized button height (minimum 50px for Apple Pay, 55px for better touch targets)
   // Use safe default with fallback
   const buttonHeight = isMobile ? 55 : 50
 
-  // Safe button height with fallback
-  const safeButtonHeight = typeof buttonHeight === 'number' && buttonHeight > 0 ? buttonHeight : 50
+  // Safe button height with fallback - ensure minimum 44px touch target for mobile
+  const safeButtonHeight = typeof buttonHeight === 'number' && buttonHeight > 0 
+    ? Math.max(buttonHeight, isMobile ? 44 : 50) 
+    : (isMobile ? 44 : 50)
 
   return (
     <div 
       className="w-full min-h-[50px]" 
-      data-namespace="paypal-buttons"
       style={{ 
         minHeight: `${safeButtonHeight}px`,
         // Ensure no CSS transforms interfere with iframe rendering
         transform: 'none',
-        willChange: 'auto'
+        willChange: 'auto',
+        // Mobile touch handling - critical for button clicks
+        touchAction: 'manipulation' as any,
+        WebkitTouchCallout: 'none' as any,
+        WebkitUserSelect: 'none' as any,
+        userSelect: 'none',
+        // Ensure container doesn't block interactions
+        pointerEvents: 'auto',
+        position: 'relative',
+        zIndex: 1,
+        // Prevent text selection on mobile that might interfere with taps
+        ...(isMobile && {
+          WebkitTapHighlightColor: 'transparent',
+        } as any)
+      }}
+      // Ensure touch events work properly - don't block PayPal iframe
+      onTouchStart={(e) => {
+        // Allow touch events to propagate to PayPal iframe
+        // Only stop propagation if we're not clicking the button area
+        const target = e.target as HTMLElement
+        if (!target.closest('iframe') && !target.closest('[data-paypal-button]')) {
+          e.stopPropagation()
+        }
       }}>
       {isProcessing && (
         <div className="mb-2 text-center text-sm text-gray-600">
@@ -335,14 +358,21 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         onError={onErrorHandler}
         onCancel={onCancel}
         style={{
-          layout: 'vertical',
+          // Use horizontal layout on mobile for better touch targets
+          layout: isMobile ? 'horizontal' : 'vertical',
           color: 'gold',
           shape: 'rect',
           label: 'pay',
           height: safeButtonHeight,
           tagline: false,
+          // Mobile-specific optimizations
+          ...(isMobile && {
+            // Ensure buttons are easily tappable on mobile
+            display: 'flex',
+            justifyContent: 'center',
+          }),
         }}
-        forceReRender={[amount, currency, hasError]}
+        forceReRender={[amount, currency, hasError, isMobile]}
       />
     </div>
   )
