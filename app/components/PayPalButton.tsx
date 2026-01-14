@@ -80,7 +80,19 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }
 
   // Show loading state while pending, but keep container height stable
+  // On mobile, ensure SDK is fully resolved before showing buttons
   if (isPending || !isResolved) {
+    // On mobile, wait a bit longer to ensure SDK is fully ready
+    if (isMobile && isPending) {
+      return (
+        <div className="text-center p-4 min-h-[50px] flex flex-col items-center justify-center">
+          <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mb-2"></div>
+          <p className="text-sm text-gray-600">Loading payment options...</p>
+          <p className="text-xs text-gray-500 mt-1">Please wait...</p>
+        </div>
+      )
+    }
+    
     return (
       <div className="text-center p-4 min-h-[50px] flex flex-col items-center justify-center">
         <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mb-2"></div>
@@ -90,17 +102,65 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }
 
   const createOrder = (data: any, actions: any) => {
-    return actions.order.create({
-      purchase_units: [
-        {
-          amount: {
-            value: amount.toString(),
-            currency_code: currency,
+    try {
+      // Validate actions and order object exist (critical for mobile)
+      if (!actions) {
+        console.error('PayPal actions object is missing in createOrder')
+        throw new Error('Payment system error. Please refresh and try again.')
+      }
+
+      if (!actions.order) {
+        console.error('PayPal actions.order is missing in createOrder')
+        throw new Error('Payment system error. Please refresh and try again.')
+      }
+
+      if (!actions.order.create) {
+        console.error('PayPal actions.order.create is missing')
+        throw new Error('Payment system error. Please refresh and try again.')
+      }
+
+      console.log('Creating PayPal order...', {
+        amount,
+        currency,
+        isMobile,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+      })
+
+      // Create order with proper error handling
+      const orderPromise = actions.order.create({
+        purchase_units: [
+          {
+            amount: {
+              value: amount.toString(),
+              currency_code: currency,
+            },
+            description: 'Unlock Premium Career Assessment Report',
           },
-          description: 'Unlock Premium Career Assessment Report',
-        },
-      ],
-    })
+        ],
+      })
+
+      // Add timeout for mobile to catch hanging requests
+      if (isMobile) {
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Order creation timeout')), 10000)
+        )
+        
+        return Promise.race([orderPromise, timeoutPromise]).catch((error) => {
+          console.error('createOrder failed on mobile:', error)
+          throw error
+        })
+      }
+
+      return orderPromise
+    } catch (error: any) {
+      console.error('createOrder error:', {
+        message: error?.message,
+        error: error,
+        isMobile,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+      })
+      throw error
+    }
   }
 
   const onApprove = async (data: any, actions: any) => {
@@ -108,51 +168,81 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     setHasError(false) // Reset error state
     setPaymentError(null) // Clear previous error message
     
+    console.log('onApprove called', {
+      orderID: data?.orderID,
+      isMobile,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+    })
+    
     try {
       // Validate actions and order object exist (critical for mobile)
-      if (!actions || !actions.order) {
-        console.error('PayPal actions or order object is missing')
+      if (!actions) {
+        console.error('PayPal actions object is missing in onApprove')
         throw new Error('Payment system error. Please refresh and try again.')
       }
 
-      // For mobile, get order details first to verify it exists
-      let orderDetails
-      try {
-        if (actions.order.get) {
-          orderDetails = await actions.order.get()
-          console.log('Order details retrieved:', orderDetails?.id)
+      if (!actions.order) {
+        console.error('PayPal actions.order is missing in onApprove')
+        throw new Error('Payment system error. Please refresh and try again.')
+      }
+
+      if (!actions.order.capture) {
+        console.error('PayPal actions.order.capture is missing')
+        throw new Error('Payment system error. Please refresh and try again.')
+      }
+
+      // Skip order.get() check on mobile - it can cause issues
+      // The order ID is already in data.orderID, so we can proceed directly to capture
+      if (!isMobile) {
+        // Only do order.get() check on desktop for debugging
+        try {
+          if (actions.order.get) {
+            const orderDetails = await actions.order.get()
+            console.log('Order details retrieved:', orderDetails?.id)
+          }
+        } catch (getError: any) {
+          console.warn('Failed to get order details (non-critical):', getError)
+          // Continue anyway - capture might still work
         }
-      } catch (getError: any) {
-        console.warn('Failed to get order details (non-critical):', getError)
-        // Continue anyway - capture might still work
       }
 
       // Capture order with retry logic for mobile network issues
       let order
       let retries = 0
-      const maxRetries = 3 // Increased to 3 attempts
-      const timeout = isMobile ? 15000 : 10000 // Longer timeout for mobile
+      const maxRetries = isMobile ? 2 : 3 // Fewer retries on mobile to fail faster
+      const timeout = isMobile ? 20000 : 10000 // Longer timeout for mobile (20s)
+      
+      console.log('Starting order capture...', { isMobile, maxRetries, timeout })
       
       while (retries < maxRetries) {
         try {
-          // Add timeout wrapper for mobile
-          const capturePromise = actions.order.capture()
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Capture timeout')), timeout)
-          )
-          
-          order = await Promise.race([capturePromise, timeoutPromise]) as any
-          
-          console.log(`✅ Payment captured successfully on attempt ${retries + 1}`)
-          break // Success, exit retry loop
+          // For mobile, use simpler capture without timeout race (can cause issues)
+          if (isMobile) {
+            // Direct capture on mobile - simpler is better
+            order = await actions.order.capture()
+            console.log(`✅ Payment captured successfully on mobile (attempt ${retries + 1})`)
+            break // Success, exit retry loop
+          } else {
+            // Desktop: use timeout wrapper
+            const capturePromise = actions.order.capture()
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Capture timeout')), timeout)
+            )
+            
+            order = await Promise.race([capturePromise, timeoutPromise]) as any
+            console.log(`✅ Payment captured successfully on desktop (attempt ${retries + 1})`)
+            break // Success, exit retry loop
+          }
         } catch (captureError: any) {
           const errorMsg = captureError?.message || String(captureError)
           const errorCode = captureError?.code || ''
           
-          console.warn(`PayPal capture attempt ${retries + 1}/${maxRetries} failed:`, {
+          console.error(`PayPal capture attempt ${retries + 1}/${maxRetries} failed:`, {
             message: errorMsg,
             code: errorCode,
-            error: captureError
+            error: captureError,
+            isMobile,
+            orderID: data?.orderID
           })
           
           // Check for retryable errors
@@ -165,7 +255,7 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
           
           if (isRetryable && retries < maxRetries - 1) {
             retries++
-            const backoffDelay = 1000 * retries // Exponential backoff: 1s, 2s, 3s
+            const backoffDelay = isMobile ? 2000 * retries : 1000 * retries // Longer backoff on mobile
             console.log(`Retrying in ${backoffDelay}ms...`)
             await new Promise(resolve => setTimeout(resolve, backoffDelay))
             continue
@@ -179,6 +269,12 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
       if (!order) {
         throw new Error('Failed to capture order after all retry attempts')
       }
+      
+      console.log('Order captured:', {
+        orderID: order.id,
+        status: order.status,
+        isMobile
+      })
       
       // Payment successful
       if (order.status === 'COMPLETED') {
@@ -202,26 +298,45 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         throw new Error(`Payment status: ${order.status}`)
       }
     } catch (error: any) {
-      console.error('PayPal payment error:', {
-        message: error?.message,
-        code: error?.code,
+      const errorMsg = error?.message || String(error)
+      const errorCode = error?.code || ''
+      
+      console.error('PayPal payment error in onApprove:', {
+        message: errorMsg,
+        code: errorCode,
         error: error,
         isMobile,
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+        orderID: data?.orderID,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+        stack: error?.stack
       })
       
       // Provide more specific error messages for mobile
       let errorMessage = 'Payment failed. Please try again.'
       if (isMobile) {
-        const errorMsg = error?.message?.toLowerCase() || ''
-        if (errorMsg.includes('network') || errorMsg.includes('timeout') || errorMsg.includes('connection')) {
+        const lowerMsg = errorMsg.toLowerCase()
+        if (lowerMsg.includes('network') || lowerMsg.includes('timeout') || lowerMsg.includes('connection') || lowerMsg.includes('fetch')) {
           errorMessage = 'Network error. Please check your connection and try again.'
-        } else if (errorMsg.includes('cancel')) {
+        } else if (lowerMsg.includes('cancel')) {
           errorMessage = 'Payment was cancelled.'
-        } else if (errorMsg.includes('timeout')) {
+          // Don't show as error for cancellations
+          setIsProcessing(false)
+          return
+        } else if (lowerMsg.includes('timeout')) {
           errorMessage = 'Payment timed out. Please try again with a better connection.'
+        } else if (lowerMsg.includes('capture') && lowerMsg.includes('fail')) {
+          errorMessage = 'Payment capture failed. The payment may have been processed. Please check your PayPal account or try again.'
+        } else if (lowerMsg.includes('order') && lowerMsg.includes('missing')) {
+          errorMessage = 'Order not found. Please try the payment again.'
         } else {
-          errorMessage = 'Payment failed. Please try again or use a different payment method.'
+          errorMessage = `Payment failed: ${errorMsg}. Please try again or use a different payment method.`
+        }
+      } else {
+        // Desktop error messages
+        if (errorMsg.toLowerCase().includes('network') || errorMsg.toLowerCase().includes('timeout')) {
+          errorMessage = 'Network error. Please check your connection and try again.'
+        } else {
+          errorMessage = `Payment failed: ${errorMsg}. Please try again.`
         }
       }
       
@@ -238,12 +353,16 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     const errorMsg = err?.message || String(err)
     const errorCode = err?.code || ''
     
-    console.error('PayPal error handler:', {
+    console.error('PayPal onErrorHandler called:', {
       message: errorMsg,
       code: errorCode,
       error: err,
       isMobile,
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+      stack: err?.stack,
+      // Additional context for debugging
+      timestamp: new Date().toISOString(),
+      url: typeof window !== 'undefined' ? window.location.href : 'unknown'
     })
     
     // Don't immediately set hasError for recoverable errors - allow retry
