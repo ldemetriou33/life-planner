@@ -31,6 +31,7 @@ export default function ShareScoreButton({ score, verdict, university, major, zo
   // Generate share image
   const generateShareImage = async () => {
     if (!shareCardRef.current) return
+    if (typeof document === 'undefined') return
 
     setIsGenerating(true)
     try {
@@ -55,6 +56,11 @@ export default function ShareScoreButton({ score, verdict, university, major, zo
 
   // Copy link to clipboard
   const copyLink = async () => {
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+      console.warn('Clipboard API not available')
+      return
+    }
+
     try {
       await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
@@ -66,12 +72,14 @@ export default function ShareScoreButton({ score, verdict, university, major, zo
 
   // LinkedIn share
   const shareLinkedIn = () => {
+    if (typeof window === 'undefined') return
     const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
     window.open(url, '_blank', 'width=600,height=400')
   }
 
   // Twitter share
   const shareTwitter = () => {
+    if (typeof window === 'undefined') return
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`
     window.open(url, '_blank', 'width=600,height=400')
   }

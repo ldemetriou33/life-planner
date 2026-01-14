@@ -38,8 +38,10 @@ export default function Home() {
     setSubmittedUniversity(university)
     setSubmittedMajor(major)
 
-    // Store email in localStorage
-    localStorage.setItem('user_email', email)
+    // Store email in localStorage (only on client side)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user_email', email)
+    }
 
     try {
       const response = await fetch('/api/assess', {

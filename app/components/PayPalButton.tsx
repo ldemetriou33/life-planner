@@ -98,10 +98,12 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
       
       // Payment successful
       if (order.status === 'COMPLETED') {
-        // Store payment in localStorage
-        localStorage.setItem('premium_unlocked', 'true')
-        localStorage.setItem('payment_id', order.id)
-        localStorage.setItem('payment_timestamp', Date.now().toString())
+        // Store payment in localStorage (only on client side)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('premium_unlocked', 'true')
+          localStorage.setItem('payment_id', order.id)
+          localStorage.setItem('payment_timestamp', Date.now().toString())
+        }
         
         onSuccess()
       } else {

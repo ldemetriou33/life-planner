@@ -158,15 +158,24 @@ export default function ResultView({ result, university, major }: ResultViewProp
 
   // Detect if user is in UK
   useEffect(() => {
-    // Check browser locale
-    const locale = navigator.language || (navigator as any).userLanguage
-    const isUKLocale = locale.toLowerCase().includes('gb') || locale.toLowerCase().includes('uk')
-    
-    // Also check timezone as fallback
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    const isUKTimezone = timezone.includes('London') || timezone.includes('Europe/London')
-    
-    setIsUK(isUKLocale || isUKTimezone)
+    // Only run on client side
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return
+
+    try {
+      // Check browser locale
+      const locale = navigator.language || (navigator as any).userLanguage || 'en'
+      const isUKLocale = locale.toLowerCase().includes('gb') || locale.toLowerCase().includes('uk')
+      
+      // Also check timezone as fallback
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const isUKTimezone = timezone.includes('London') || timezone.includes('Europe/London')
+      
+      setIsUK(isUKLocale || isUKTimezone)
+    } catch (error) {
+      // Fallback to false if detection fails
+      console.warn('UK detection failed:', error)
+      setIsUK(false)
+    }
   }, [])
   
   const containerVariants = {
@@ -283,10 +292,12 @@ export default function ResultView({ result, university, major }: ResultViewProp
     setIsPremium(true)
     setIsProcessingPayment(false)
     setPaymentError(null)
-    // Scroll to premium content
-    setTimeout(() => {
-      document.getElementById('premium-content')?.scrollIntoView({ behavior: 'smooth' })
-    }, 100)
+    // Scroll to premium content (only on client side)
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      setTimeout(() => {
+        document.getElementById('premium-content')?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+    }
   }
 
   // PayPal payment error handler
@@ -302,7 +313,9 @@ export default function ResultView({ result, university, major }: ResultViewProp
     
     if (password === FREE_ACCESS_PASSWORD || password === UNI_PASSWORD) {
       setIsPremium(true)
-      localStorage.setItem('premium_unlocked', 'true')
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('premium_unlocked', 'true')
+      }
       setPassword('')
     } else {
       setPasswordError('Incorrect password')
@@ -317,7 +330,9 @@ export default function ResultView({ result, university, major }: ResultViewProp
     
     if (enteredPassword === UNI_PASSWORD) {
       setIsPremium(true)
-      localStorage.setItem('premium_unlocked', 'true')
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('premium_unlocked', 'true')
+      }
       input.value = ''
     }
   }
@@ -328,6 +343,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
 
   // Get client ID from environment variable or use fallback
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
+
+  // Track if we're on the client side
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(typeof window !== 'undefined')
+  }, [])
 
   // Memoize PayPal provider options to prevent re-initialization
   // Include funding-eligibility component to enable Apple Pay and other payment methods
@@ -340,7 +362,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
   }), [isUK, clientId])
 
   return (
-    <PayPalScriptProvider options={paypalOptions}>
+    <PayPalScriptProvider options={paypalOptions} key={isClient ? 'client' : 'server'}>
     <motion.div
       variants={containerVariants}
       initial="hidden"
