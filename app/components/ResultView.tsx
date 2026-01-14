@@ -150,18 +150,11 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [passwordError, setPasswordError] = useState<string | null>(null)
-  const [isMounted, setIsMounted] = useState(false)
   const foundUniversity = findUniversity(university)
   const triggerRef = useRef<HTMLDivElement>(null)
 
   // Premium is always locked by default - require payment/password each time
   // Removed localStorage check so users must unlock every time
-
-  // Ensure component is mounted on client before rendering PayPal
-  // This prevents SSR/client mismatches and double initialization in Strict Mode
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   // Detect if user is in UK
   useEffect(() => {
@@ -361,19 +354,14 @@ export default function ResultView({ result, university, major }: ResultViewProp
     components: 'buttons' as const,
   }), [isUK, clientId])
 
-  // Don't render PayPal until component is mounted on client
+  // Check if we're on client side (more efficient than useEffect)
   // This prevents SSR/client mismatches and double initialization in Strict Mode
-  if (!isMounted) {
-    return (
-      <div className="w-full max-w-6xl mx-auto p-8 text-center">
-        <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-        <p className="text-sm text-gray-600 mt-2">Loading...</p>
-      </div>
-    )
-  }
+  const isMounted = typeof window !== 'undefined'
 
-  return (
-    <PayPalScriptProvider options={paypalOptions}>
+  // Render all content immediately, only conditionally render PayPal provider
+  // This way users see their results instantly while PayPal loads in background
+  const content = (
+    <>
     <motion.div
       variants={containerVariants}
       initial="hidden"
@@ -556,17 +544,6 @@ export default function ResultView({ result, university, major }: ResultViewProp
             <HumanMoatIndicator level={result.human_moat} />
             <SaturationTimeline saturationYear={result.saturation_year} showOnlyPhase1={!isPremium} />
           </div>
-
-          {/* Premium Timeline (Full) - Only show if premium */}
-          {isPremium && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <SaturationTimeline saturationYear={result.saturation_year} showOnlyPhase1={false} />
-            </motion.div>
-          )}
 
           {/* Timeline Context and Pivot Strategy - Show on mobile so users see locked content */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
@@ -857,7 +834,20 @@ export default function ResultView({ result, university, major }: ResultViewProp
         </form>
       ) : null}
     </div>
-    </PayPalScriptProvider>
+    </>
   )
+
+  // Conditionally wrap with PayPal provider only when mounted
+  // This allows content to render immediately while PayPal loads
+  if (isMounted) {
+    return (
+      <PayPalScriptProvider options={paypalOptions}>
+        {content}
+      </PayPalScriptProvider>
+    )
+  }
+
+  // On server-side, render content without PayPal provider
+  return content
 }
 

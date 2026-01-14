@@ -160,8 +160,9 @@ export async function POST(req: Request) {
     let data;
 
     // PHASE 1: THE LAPTOP PURGE (2026–2029)
-    // CS, Data, Digital Art, Translation, Basic Finance, Marketing, AI
-    if (input.match(/comput|softwar|code|data|analy|account|financ|translat|writ|journal|copy|graphic|digit|market|artificial intelligence|machine learning|ai\b|ml\b/)) {
+    // CS, Data, Digital Art, Translation, Writing, Marketing, AI
+    // Note: Accounting and Finance are in Phase 2, so we exclude them here
+    if (input.match(/comput|softwar|code|data|analy|translat|writ|journal|copy|graphic|digit|market|artificial intelligence|machine learning|ai\b|ml\b/) && !input.match(/account|financ/)) {
       data = {
         singularity_score: 15, // CRITICAL
         human_moat: "Low",
@@ -191,8 +192,9 @@ export async function POST(req: Request) {
     }
 
     // PHASE 2: THE MIDDLEMAN MASSACRE (2029–2032)
-    // Business, Management, HR, Logistics, Supply Chain, Admin, Law (Corporate)
-    else if (input.match(/busi|manag|hr|human resource|logistic|supply chain|admin|law/)) {
+    // Business, Management, HR, Logistics, Supply Chain, Admin, Corporate Law
+    // Note: General "Law" goes to Phase 3, only corporate/business law here
+    else if (input.match(/busi|manag|hr|human resource|logistic|supply chain|admin|corporate law|business law/) || (input.match(/\blaw\b|\blegal\b/) && input.match(/corporate|business|commercial/))) {
       data = {
         singularity_score: 45, // DANGER
         human_moat: "Medium",
@@ -222,8 +224,9 @@ export async function POST(req: Request) {
     }
 
     // PHASE 3: THE EXPERT ECLIPSE (2032–2035)
-    // Matches: General Medicine, Pharmacy, Law, Radiology, Anesthesiology, Pathology
-    else if (input.match(/medicin|pharm|radio|anesthes|anaesthes|pathol|law|legal|engin/)) {
+    // Matches: General Medicine, Pharmacy, Law, Legal Studies, Radiology, Anesthesiology, Pathology
+    // Note: Engineering is excluded here - specific engineering types are in Phase 4/5
+    else if (input.match(/medicin|pharm|radio|anesthes|anaesthes|pathol|\blaw\b|\blegal\b/) && !input.match(/engin|construct|transport|manufactur|corporate law|business law/)) {
       
       // Sub-logic for Anesthesiology specific verdict
       const isAnesthes = input.match(/anesthes|anaesthes/);
@@ -351,8 +354,8 @@ export async function POST(req: Request) {
 
     // PHASE 6: THE HUMAN PREMIUM (2041–2056)
     // Philosophy, Psychology, Nursing, Art (fine), Theology, Education (early childhood), Bio-engineering
-    // Note: Exclude "artificial" - use word boundaries to match "art" but not "artificial"
-    else if (input.match(/philosoph|psycholog|nurs|(^|\s)art(\s|$)|fine art|theolog|educ|early childhood|bio-engin/)) {
+    // Note: Match "art" but exclude "artificial", "article", "part", etc.
+    else if (input.match(/philosoph|psycholog|nurs|fine art|theolog|educ|early childhood|bio-engin/) || (input.match(/\bart\b/) && !input.match(/artificial|article|part|smart|start|heart/))) {
       data = {
         singularity_score: 98, // IMMORTAL
         human_moat: "High",
