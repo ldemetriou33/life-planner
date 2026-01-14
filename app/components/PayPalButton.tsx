@@ -19,17 +19,44 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   const [isMobile, setIsMobile] = useState(false)
 
   // Detect mobile device for optimized button rendering
+  // Only run on client side with proper guards
   useEffect(() => {
+    // Guard: Only run if window is available (client-side)
+    if (typeof window === 'undefined') return
+
     const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
-      const isSmallScreen = window.innerWidth < 768
-      setIsMobile(isMobileDevice || isSmallScreen)
+      try {
+        // Safely access navigator and window
+        const nav = typeof navigator !== 'undefined' ? navigator : null
+        const win = typeof window !== 'undefined' ? window : null
+        
+        if (!nav || !win) {
+          setIsMobile(false)
+          return
+        }
+
+        const userAgent = nav.userAgent || nav.vendor || (win as any).opera || ''
+        const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
+        const isSmallScreen = win.innerWidth < 768
+        setIsMobile(isMobileDevice || isSmallScreen)
+      } catch (error) {
+        // Fallback: assume desktop if detection fails
+        console.warn('Mobile detection failed, defaulting to desktop:', error)
+        setIsMobile(false)
+      }
     }
     
     checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    
+    // Only add event listener if window is available
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', checkMobile)
+      return () => {
+        if (typeof window !== 'undefined') {
+          window.removeEventListener('resize', checkMobile)
+        }
+      }
+    }
   }, [])
 
   if (isRejected) {
@@ -99,28 +126,45 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }
 
   // Log payment method availability for debugging (only in development)
+  // Only run on client side with proper guards
   useEffect(() => {
-    if (isResolved && process.env.NODE_ENV === 'development') {
+    // Guard: Only run if window is available and in development
+    if (typeof window === 'undefined' || process.env.NODE_ENV !== 'development') return
+    if (!isResolved) return
+
+    try {
+      const nav = typeof navigator !== 'undefined' ? navigator : null
+      const win = typeof window !== 'undefined' ? window : null
+      
+      if (!nav || !win) return
+
       console.log('💳 PayPal SDK loaded successfully')
       console.log('📱 Mobile device detected:', isMobile)
-      console.log('🌐 User agent:', navigator.userAgent)
-      console.log('🔒 HTTPS:', window.location.protocol === 'https:')
+      console.log('🌐 User agent:', nav.userAgent || 'unknown')
+      console.log('🔒 HTTPS:', win.location?.protocol === 'https:')
       console.log('💵 Currency:', currency)
       console.log('💰 Amount:', amount)
       
       // Check if Apple Pay is potentially available
-      if (isMobile && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
+      if (isMobile && nav.userAgent && /iphone|ipad|ipod/i.test(nav.userAgent)) {
         console.log('🍎 Apple device detected - Apple Pay should be available if merchant is approved')
       }
+    } catch (error) {
+      // Silently fail logging - don't break the app
+      console.warn('Payment method logging failed:', error)
     }
   }, [isResolved, isMobile, currency, amount])
 
   // Mobile-optimized button height (minimum 50px for Apple Pay)
+  // Use safe default with fallback
   const buttonHeight = isMobile ? 55 : 50
+
+  // Safe button height with fallback
+  const safeButtonHeight = typeof buttonHeight === 'number' && buttonHeight > 0 ? buttonHeight : 50
 
   return (
     <div className="w-full min-h-[50px]" style={{ 
-      minHeight: `${buttonHeight}px`,
+      minHeight: `${safeButtonHeight}px`,
       // Ensure no CSS transforms interfere with iframe rendering
       transform: 'none',
       willChange: 'auto'
@@ -138,11 +182,11 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         onError={onErrorHandler}
         onCancel={onCancel}
         style={{
-          layout: isMobile ? 'vertical' : 'vertical',
+          layout: 'vertical',
           color: 'gold',
           shape: 'rect',
           label: 'pay',
-          height: buttonHeight,
+          height: safeButtonHeight,
           tagline: false,
         }}
         forceReRender={[amount, currency]}
