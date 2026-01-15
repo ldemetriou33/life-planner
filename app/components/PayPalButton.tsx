@@ -25,6 +25,7 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   const [hasError, setHasError] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [sdkReady, setSdkReady] = useState(false)
 
   // Ensure component is mounted before accessing browser APIs
   useEffect(() => {
@@ -55,6 +56,24 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     }
   }, [isMounted])
 
+  // Ensure SDK is fully ready on mobile before allowing interactions
+  useEffect(() => {
+    if (isResolved && !isPending && !isRejected) {
+      // On mobile, add a small delay to ensure SDK is completely initialized
+      if (isMobile) {
+        const timer = setTimeout(() => {
+          setSdkReady(true)
+          console.log('✅ PayPal SDK ready on mobile')
+        }, 500) // 500ms delay for mobile to ensure full initialization
+        return () => clearTimeout(timer)
+      } else {
+        setSdkReady(true)
+      }
+    } else {
+      setSdkReady(false)
+    }
+  }, [isResolved, isPending, isRejected, isMobile])
+
   // Don't render until mounted to prevent SSR/client mismatches
   if (!isMounted) {
     return (
@@ -80,10 +99,10 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }
 
   // Show loading state while pending, but keep container height stable
-  // On mobile, ensure SDK is fully resolved before showing buttons
-  if (isPending || !isResolved) {
+  // On mobile, ensure SDK is fully resolved AND ready before showing buttons
+  if (isPending || !isResolved || (isMobile && !sdkReady)) {
     // On mobile, wait a bit longer to ensure SDK is fully ready
-    if (isMobile && isPending) {
+    if (isMobile && (isPending || !sdkReady)) {
       return (
         <div className="text-center p-4 min-h-[50px] flex flex-col items-center justify-center">
           <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mb-2"></div>
@@ -102,28 +121,37 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }
 
   const createOrder = (data: any, actions: any) => {
+    console.log('🔵 createOrder called', {
+      amount,
+      currency,
+      isMobile,
+      sdkReady,
+      isResolved,
+      timestamp: new Date().toISOString(),
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+    })
+    
     try {
       // Validate actions and order object exist (critical for mobile)
       if (!actions) {
-        console.error('PayPal actions object is missing in createOrder')
+        console.error('❌ PayPal actions object is missing in createOrder')
         throw new Error('Payment system error. Please refresh and try again.')
       }
 
       if (!actions.order) {
-        console.error('PayPal actions.order is missing in createOrder')
+        console.error('❌ PayPal actions.order is missing in createOrder')
         throw new Error('Payment system error. Please refresh and try again.')
       }
 
       if (!actions.order.create) {
-        console.error('PayPal actions.order.create is missing')
+        console.error('❌ PayPal actions.order.create is missing')
         throw new Error('Payment system error. Please refresh and try again.')
       }
 
-      console.log('Creating PayPal order...', {
+      console.log('✅ All validations passed, creating order...', {
         amount,
         currency,
-        isMobile,
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+        isMobile
       })
 
       // Create order with proper error handling
@@ -422,29 +450,11 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         minHeight: `${safeButtonHeight}px`,
         // Ensure no CSS transforms interfere with iframe rendering
         transform: 'none',
-        willChange: 'auto',
-        // Mobile touch handling - critical for button clicks
-        touchAction: 'manipulation' as any,
-        WebkitTouchCallout: 'none' as any,
-        WebkitUserSelect: 'none' as any,
-        userSelect: 'none',
-        // Ensure container doesn't block interactions
+        // Ensure container doesn't block interactions - critical for mobile
         pointerEvents: 'auto',
         position: 'relative',
-        zIndex: 1,
-        // Prevent text selection on mobile that might interfere with taps
-        ...(isMobile && {
-          WebkitTapHighlightColor: 'transparent',
-        } as any)
-      }}
-      // Ensure touch events work properly - don't block PayPal iframe
-      onTouchStart={(e) => {
-        // Allow touch events to propagate to PayPal iframe
-        // Only stop propagation if we're not clicking the button area
-        const target = e.target as HTMLElement
-        if (!target.closest('iframe') && !target.closest('[data-paypal-button]')) {
-          e.stopPropagation()
-        }
+        // Minimal styling to not interfere with PayPal iframe
+        overflow: 'visible',
       }}>
       {isProcessing && (
         <div className="mb-2 text-center text-sm text-gray-600">
@@ -471,6 +481,19 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
       )}
       
       {/* Single PayPal Buttons component - PayPal automatically shows Apple Pay when available */}
+      {(() => {
+        // Debug logging when buttons are rendered
+        if (isMobile && sdkReady) {
+          console.log('🟢 PayPal buttons rendered on mobile', {
+            isResolved,
+            sdkReady,
+            isMobile,
+            amount,
+            currency
+          })
+        }
+        return null
+      })()}
       <PayPalButtons
         createOrder={createOrder}
         onApprove={onApprove}
@@ -484,14 +507,8 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
           label: 'pay',
           height: safeButtonHeight,
           tagline: false,
-          // Mobile-specific optimizations
-          ...(isMobile && {
-            // Ensure buttons are easily tappable on mobile
-            display: 'flex',
-            justifyContent: 'center',
-          }),
         }}
-        forceReRender={[amount, currency, hasError, isMobile]}
+        forceReRender={[amount, currency, hasError, isMobile, sdkReady]}
       />
     </div>
   )
