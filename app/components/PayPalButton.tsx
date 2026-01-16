@@ -57,37 +57,59 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     }
   }, [isMounted])
 
-  // Ensure SDK is fully ready on mobile before allowing interactions
-  // Add additional validation that PayPal window object exists
+  // Ensure SDK is ready - simplified logic, don't block on verification
   useEffect(() => {
     if (isResolved && !isPending && !isRejected) {
-      // On mobile, add a longer delay and validate SDK is truly ready
+      // On mobile, add a small delay to ensure SDK is initialized
       if (isMobile) {
         const timer = setTimeout(() => {
-          // Additional validation: check that PayPal window object exists
-          const isPayPalReady = typeof window !== 'undefined' && 
-            (window as any).paypal !== undefined
-          
-          if (isPayPalReady) {
-            setSdkReady(true)
-            console.log('✅ PayPal SDK ready on mobile (validated)')
-          } else {
-            console.warn('⚠️ PayPal SDK resolved but window.paypal not found')
-            // Still set ready after delay - might be a timing issue
-            setSdkReady(true)
-          }
-        }, 1000) // Increased to 1000ms delay for mobile to ensure full initialization
+          setSdkReady(true)
+          console.log('✅ PayPal SDK ready on mobile')
+        }, 500) // Reduced delay - 500ms should be enough
         return () => clearTimeout(timer)
       } else {
-        // Desktop: validate but don't delay
-        const isPayPalReady = typeof window !== 'undefined' && 
-          (window as any).paypal !== undefined
-        setSdkReady(isPayPalReady || true) // Set ready even if check fails (might be timing)
+        // Desktop: set ready immediately
+        setSdkReady(true)
       }
     } else {
       setSdkReady(false)
     }
   }, [isResolved, isPending, isRejected, isMobile])
+
+  // Optional SDK verification - doesn't block rendering, just logs
+  useEffect(() => {
+    if (isResolved && typeof window !== 'undefined') {
+      const checkPayPal = () => {
+        const paypal = (window as any).paypal
+        if (paypal) {
+          setSdkVerified(true)
+          console.log('✅ PayPal SDK verified - window.paypal exists')
+        } else {
+          console.warn('⚠️ window.paypal not found (but SDK is resolved)')
+          // Don't block - verification is optional
+          setSdkVerified(false)
+        }
+      }
+      
+      // Check immediately and after a delay
+      checkPayPal()
+      const timer = setTimeout(checkPayPal, 1000)
+      return () => clearTimeout(timer)
+    } else {
+      setSdkVerified(false)
+    }
+  }, [isResolved])
+
+  // Timeout fallback - if SDK is resolved but sdkReady is still false after 3 seconds, set it anyway
+  useEffect(() => {
+    if (isResolved && !isPending && !isRejected && !sdkReady) {
+      const fallbackTimer = setTimeout(() => {
+        console.warn('⚠️ SDK ready timeout - forcing ready state')
+        setSdkReady(true)
+      }, 3000) // 3 second fallback
+      return () => clearTimeout(fallbackTimer)
+    }
+  }, [isResolved, isPending, isRejected, sdkReady])
 
   // Don't render until mounted to prevent SSR/client mismatches
   if (!isMounted) {
@@ -114,9 +136,9 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }
 
   // Show loading state while pending, but keep container height stable
-  // On mobile, ensure SDK is fully resolved AND ready AND verified before showing buttons
-  // CRITICAL: Only show buttons when SDK is 100% ready and verified to prevent immediate errors
-  const isSdkFullyReady = isResolved && !isPending && !isRejected && sdkReady && sdkVerified
+  // Don't require sdkVerified - it's optional enhancement, not blocker
+  // Only require SDK to be resolved and ready - verification is nice-to-have
+  const isSdkFullyReady = isResolved && !isPending && !isRejected && sdkReady
   
   if (!isSdkFullyReady) {
     // Visual debugging: Show SDK state
