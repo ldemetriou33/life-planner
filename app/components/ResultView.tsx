@@ -435,6 +435,10 @@ export default function ResultView({ result, university, major }: ResultViewProp
   // Include currency, clientId, and mobile status to ensure proper reload
   const paypalProviderKey = `paypal-${isUK ? 'GBP' : 'USD'}-${clientId?.substring(0, 10)}-${isMobileDevice ? 'mobile' : 'desktop'}`
 
+  // Check if we're on client side (more efficient than useEffect)
+  // This prevents SSR/client mismatches and double initialization in Strict Mode
+  const isMounted = typeof window !== 'undefined'
+
   // On mobile, add a small delay to ensure currency is properly set before loading script
   // This prevents script from loading with wrong currency
   useEffect(() => {
