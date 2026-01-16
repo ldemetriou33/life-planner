@@ -182,22 +182,26 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     )
   }
 
-  // Simplified createOrder - absolute minimum, let PayPal SDK handle everything
+  // Simplified createOrder - ensure currency matches provider
   const createOrder = (data: any, actions: any) => {
-    console.log('🔵 createOrder called (simplified)', {
+    // Ensure currency is valid and matches provider configuration
+    const validCurrency = currency === 'GBP' || currency === 'USD' ? currency : 'USD'
+    
+    console.log('🔵 createOrder called', {
       amount,
-      currency,
+      currency: validCurrency,
+      originalCurrency: currency,
       isMobile,
       timestamp: new Date().toISOString()
     })
     
-    // Absolute minimum - just create the order, let PayPal SDK handle all validation
+    // Create order with validated currency
     return actions.order.create({
       purchase_units: [
         {
           amount: {
             value: amount.toString(),
-            currency_code: currency,
+            currency_code: validCurrency, // Use validated currency
           },
           description: 'Unlock Premium Career Assessment Report',
         },

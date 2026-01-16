@@ -372,17 +372,18 @@ export default function ResultView({ result, university, major }: ResultViewProp
     }
   }, [])
 
-  // Memoize PayPal provider options - SIMPLIFIED TO MINIMUM for testing
+  // Memoize PayPal provider options - ensure currency matches createOrder
   const paypalOptions = useMemo(() => {
-    // Absolute minimum configuration - just the essentials
+    // Currency must match what we use in createOrder
+    const currency = isUK ? 'GBP' : 'USD'
+    
     const options: any = {
       clientId,
-      currency: isUK ? 'GBP' : 'USD',
+      currency: currency, // Explicitly set currency to match createOrder
       intent: 'capture' as const,
     }
     
-    // That's it - let PayPal SDK handle everything else
-    // We'll add options back one by one if needed after testing
+    console.log('PayPal provider options:', { currency, isUK, clientId: clientId?.substring(0, 10) + '...' })
     
     return options
   }, [isUK, clientId])
