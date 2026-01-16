@@ -372,31 +372,20 @@ export default function ResultView({ result, university, major }: ResultViewProp
     }
   }, [])
 
-  // Memoize PayPal provider options to prevent re-initialization
-  // Enhanced mobile support with optimized configuration
+  // Memoize PayPal provider options - SIMPLIFIED TO MINIMUM for testing
   const paypalOptions = useMemo(() => {
+    // Absolute minimum configuration - just the essentials
     const options: any = {
       clientId,
       currency: isUK ? 'GBP' : 'USD',
       intent: 'capture' as const,
-      enableFunding: 'paypal,card,applepay,venmo' as const, // Mobile payment methods
-      components: 'buttons' as const, // Simplified for better mobile performance
-      // Mobile-specific optimizations
-      // No dataNamespace - can cause mobile popup issues
     }
     
-    // Add mobile-specific options
-    if (isMobileDevice) {
-      // Ensure proper locale for mobile
-      const locale = typeof navigator !== 'undefined' ? navigator.language : 'en_US'
-      options.locale = locale
-      
-      // Disable funding methods that might cause issues on mobile
-      // Keep only essential ones
-    }
+    // That's it - let PayPal SDK handle everything else
+    // We'll add options back one by one if needed after testing
     
     return options
-  }, [isUK, clientId, isMobileDevice])
+  }, [isUK, clientId])
 
   // Check if we're on client side (more efficient than useEffect)
   // This prevents SSR/client mismatches and double initialization in Strict Mode

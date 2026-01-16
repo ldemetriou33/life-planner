@@ -26,6 +26,7 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   const [isMounted, setIsMounted] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [sdkReady, setSdkReady] = useState(false)
+  const [sdkVerified, setSdkVerified] = useState(false) // New state for SDK verification
 
   // Ensure component is mounted before accessing browser APIs
   useEffect(() => {
@@ -57,17 +58,31 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }, [isMounted])
 
   // Ensure SDK is fully ready on mobile before allowing interactions
+  // Add additional validation that PayPal window object exists
   useEffect(() => {
     if (isResolved && !isPending && !isRejected) {
-      // On mobile, add a small delay to ensure SDK is completely initialized
+      // On mobile, add a longer delay and validate SDK is truly ready
       if (isMobile) {
         const timer = setTimeout(() => {
-          setSdkReady(true)
-          console.log('✅ PayPal SDK ready on mobile')
-        }, 500) // 500ms delay for mobile to ensure full initialization
+          // Additional validation: check that PayPal window object exists
+          const isPayPalReady = typeof window !== 'undefined' && 
+            (window as any).paypal !== undefined
+          
+          if (isPayPalReady) {
+            setSdkReady(true)
+            console.log('✅ PayPal SDK ready on mobile (validated)')
+          } else {
+            console.warn('⚠️ PayPal SDK resolved but window.paypal not found')
+            // Still set ready after delay - might be a timing issue
+            setSdkReady(true)
+          }
+        }, 1000) // Increased to 1000ms delay for mobile to ensure full initialization
         return () => clearTimeout(timer)
       } else {
-        setSdkReady(true)
+        // Desktop: validate but don't delay
+        const isPayPalReady = typeof window !== 'undefined' && 
+          (window as any).paypal !== undefined
+        setSdkReady(isPayPalReady || true) // Set ready even if check fails (might be timing)
       }
     } else {
       setSdkReady(false)
@@ -99,15 +114,34 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }
 
   // Show loading state while pending, but keep container height stable
-  // On mobile, ensure SDK is fully resolved AND ready before showing buttons
-  if (isPending || !isResolved || (isMobile && !sdkReady)) {
+  // On mobile, ensure SDK is fully resolved AND ready AND verified before showing buttons
+  // CRITICAL: Only show buttons when SDK is 100% ready and verified to prevent immediate errors
+  const isSdkFullyReady = isResolved && !isPending && !isRejected && sdkReady && sdkVerified
+  
+  if (!isSdkFullyReady) {
+    // Visual debugging: Show SDK state
+    const sdkState = {
+      isResolved,
+      isPending,
+      isRejected,
+      sdkReady,
+      sdkVerified,
+      timestamp: new Date().toLocaleTimeString()
+    }
+    
     // On mobile, wait a bit longer to ensure SDK is fully ready
-    if (isMobile && (isPending || !sdkReady)) {
+    if (isMobile) {
       return (
         <div className="text-center p-4 min-h-[50px] flex flex-col items-center justify-center">
           <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mb-2"></div>
           <p className="text-sm text-gray-600">Loading payment options...</p>
-          <p className="text-xs text-gray-500 mt-1">Please wait...</p>
+          <p className="text-xs text-gray-500 mt-1">Please wait for payment system to initialize...</p>
+          {/* Visual debugging - remove in production */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="text-xs text-gray-400 mt-2 p-2 bg-gray-100 rounded">
+              SDK State: resolved={String(isResolved)}, ready={String(sdkReady)}, verified={String(sdkVerified)}
+            </div>
+          )}
         </div>
       )
     }
@@ -116,79 +150,37 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
       <div className="text-center p-4 min-h-[50px] flex flex-col items-center justify-center">
         <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mb-2"></div>
         <p className="text-sm text-gray-600">Loading payment options...</p>
+        {/* Visual debugging - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="text-xs text-gray-400 mt-2 p-2 bg-gray-100 rounded">
+            SDK State: resolved={String(isResolved)}, ready={String(sdkReady)}, verified={String(sdkVerified)}
+          </div>
+        )}
       </div>
     )
   }
 
+  // Simplified createOrder - absolute minimum, let PayPal SDK handle everything
   const createOrder = (data: any, actions: any) => {
-    console.log('🔵 createOrder called', {
+    console.log('🔵 createOrder called (simplified)', {
       amount,
       currency,
       isMobile,
-      sdkReady,
-      isResolved,
-      timestamp: new Date().toISOString(),
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+      timestamp: new Date().toISOString()
     })
     
-    try {
-      // Validate actions and order object exist (critical for mobile)
-      if (!actions) {
-        console.error('❌ PayPal actions object is missing in createOrder')
-        throw new Error('Payment system error. Please refresh and try again.')
-      }
-
-      if (!actions.order) {
-        console.error('❌ PayPal actions.order is missing in createOrder')
-        throw new Error('Payment system error. Please refresh and try again.')
-      }
-
-      if (!actions.order.create) {
-        console.error('❌ PayPal actions.order.create is missing')
-        throw new Error('Payment system error. Please refresh and try again.')
-      }
-
-      console.log('✅ All validations passed, creating order...', {
-        amount,
-        currency,
-        isMobile
-      })
-
-      // Create order with proper error handling
-      const orderPromise = actions.order.create({
-        purchase_units: [
-          {
-            amount: {
-              value: amount.toString(),
-              currency_code: currency,
-            },
-            description: 'Unlock Premium Career Assessment Report',
+    // Absolute minimum - just create the order, let PayPal SDK handle all validation
+    return actions.order.create({
+      purchase_units: [
+        {
+          amount: {
+            value: amount.toString(),
+            currency_code: currency,
           },
-        ],
-      })
-
-      // Add timeout for mobile to catch hanging requests
-      if (isMobile) {
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Order creation timeout')), 10000)
-        )
-        
-        return Promise.race([orderPromise, timeoutPromise]).catch((error) => {
-          console.error('createOrder failed on mobile:', error)
-          throw error
-        })
-      }
-
-      return orderPromise
-    } catch (error: any) {
-      console.error('createOrder error:', {
-        message: error?.message,
-        error: error,
-        isMobile,
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
-      })
-      throw error
-    }
+          description: 'Unlock Premium Career Assessment Report',
+        },
+      ],
+    })
   }
 
   const onApprove = async (data: any, actions: any) => {
@@ -377,50 +369,26 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     }
   }
 
+  // Simplified error handler - just log and show message
   const onErrorHandler = (err: any) => {
     const errorMsg = err?.message || String(err)
-    const errorCode = err?.code || ''
     
-    console.error('PayPal onErrorHandler called:', {
-      message: errorMsg,
-      code: errorCode,
+    // Simple logging
+    console.error('❌ PayPal onErrorHandler:', {
       error: err,
+      message: errorMsg,
+      code: err?.code,
       isMobile,
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
-      stack: err?.stack,
-      // Additional context for debugging
-      timestamp: new Date().toISOString(),
-      url: typeof window !== 'undefined' ? window.location.href : 'unknown'
+      timestamp: new Date().toISOString()
     })
     
-    // Don't immediately set hasError for recoverable errors - allow retry
-    const isRecoverable = 
-      errorMsg.toLowerCase().includes('network') ||
-      errorMsg.toLowerCase().includes('timeout') ||
-      errorMsg.toLowerCase().includes('connection') ||
-      errorCode === 'NETWORK_ERROR'
+    // Simple error message
+    const errorMessage = isMobile 
+      ? `Payment error: ${errorMsg}. Please try again or use a desktop browser.`
+      : `Payment error: ${errorMsg}. Please try again.`
     
-    if (!isRecoverable) {
-      setHasError(true)
-    }
-    
-    // Provide more specific error messages
-    let errorMessage = 'An error occurred with PayPal. Please try again.'
-    if (isMobile) {
-      if (errorMsg.toLowerCase().includes('network') || errorMsg.toLowerCase().includes('timeout') || errorMsg.toLowerCase().includes('connection')) {
-        errorMessage = 'Network error. Please check your connection and try again.'
-      } else if (errorMsg.toLowerCase().includes('popup') || errorMsg.toLowerCase().includes('blocked')) {
-        errorMessage = 'Popup blocked. Please allow popups and try again.'
-      } else if (errorMsg.toLowerCase().includes('cancel')) {
-        errorMessage = 'Payment was cancelled.'
-        // Don't show as error for cancelled payments
-        setIsProcessing(false)
-        return
-      } else {
-        errorMessage = 'Payment error. Please try again or use a different payment method.'
-      }
-    }
-    
+    setHasError(true)
+    setPaymentError(errorMessage)
     onError?.(errorMessage)
     setIsProcessing(false)
   }
@@ -462,54 +430,100 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         </div>
       )}
       
-      {/* Show error message with retry option if payment failed */}
-      {hasError && paymentError && (
-        <div className="mb-2">
-          <div className="text-red-500 text-xs text-center p-2 bg-red-50 rounded mb-1">
-            {paymentError}
-          </div>
-          <div 
-            onClick={() => {
-              setHasError(false)
-              setPaymentError(null)
-            }}
-            className="text-xs text-center text-blue-600 hover:text-blue-700 cursor-pointer"
-          >
-            Click to try again
-          </div>
+          {/* Show error message with retry option if payment failed */}
+          {hasError && paymentError && (
+            <div className="mb-2">
+              <div className="text-red-500 text-xs text-center p-2 bg-red-50 rounded mb-1">
+                {paymentError}
+              </div>
+              {isMobile && (
+                <div className="text-xs text-gray-600 text-center mb-1 px-2">
+                  Mobile payment tips: Ensure popups are allowed, check your internet connection, or try on a desktop browser.
+                </div>
+              )}
+              <div 
+                onClick={() => {
+                  setHasError(false)
+                  setPaymentError(null)
+                  // Force re-render of buttons by updating state
+                  setIsProcessing(false)
+                }}
+                className="text-xs text-center text-blue-600 hover:text-blue-700 cursor-pointer font-medium"
+              >
+                Click to try again
+              </div>
+            </div>
+          )}
+      
+      {/* Visual debugging: Show when buttons are rendered */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="text-xs text-green-600 mb-2 p-1 bg-green-50 rounded text-center">
+          ✅ Buttons Ready - SDK verified at {new Date().toLocaleTimeString()}
         </div>
       )}
       
       {/* Single PayPal Buttons component - PayPal automatically shows Apple Pay when available */}
       {(() => {
         // Debug logging when buttons are rendered
-        if (isMobile && sdkReady) {
-          console.log('🟢 PayPal buttons rendered on mobile', {
-            isResolved,
-            sdkReady,
-            isMobile,
-            amount,
-            currency
-          })
-        }
+        console.log('🟢 PayPal buttons rendered', {
+          isResolved,
+          sdkReady,
+          sdkVerified,
+          isMobile,
+          amount,
+          currency,
+          timestamp: new Date().toISOString()
+        })
         return null
       })()}
-      <PayPalButtons
-        createOrder={createOrder}
-        onApprove={onApprove}
-        onError={onErrorHandler}
-        onCancel={onCancel}
+      
+      {/* Click prevention wrapper - blocks clicks until SDK is ready */}
+      <div
         style={{
-          // Use horizontal layout on mobile for better touch targets
-          layout: isMobile ? 'horizontal' : 'vertical',
-          color: 'gold',
-          shape: 'rect',
-          label: 'pay',
-          height: safeButtonHeight,
-          tagline: false,
+          position: 'relative',
+          pointerEvents: isSdkFullyReady ? 'auto' : 'none',
+          opacity: isSdkFullyReady ? 1 : 0.6,
         }}
-        forceReRender={[amount, currency, hasError, isMobile, sdkReady]}
-      />
+      >
+        {/* Overlay to block clicks when SDK not ready */}
+        {!isSdkFullyReady && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 10,
+              backgroundColor: 'rgba(255, 255, 255, 0.5)',
+              cursor: 'not-allowed',
+            }}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              console.log('⚠️ Button click blocked - SDK not ready')
+            }}
+          />
+        )}
+        
+        <PayPalButtons
+          createOrder={createOrder}
+          onApprove={onApprove}
+          onError={onErrorHandler}
+          onCancel={onCancel}
+          style={{
+            // Use horizontal layout on mobile for better touch targets
+            layout: isMobile ? 'horizontal' : 'vertical',
+            color: 'gold',
+            shape: 'rect',
+            label: 'pay',
+            height: safeButtonHeight,
+            tagline: false,
+          }}
+          // Let PayPal automatically choose redirect on mobile (more reliable than popup)
+          forceReRender={[amount, currency, hasError, isMobile, sdkReady, isSdkFullyReady]}
+        />
+      </div>
     </div>
   )
 })
