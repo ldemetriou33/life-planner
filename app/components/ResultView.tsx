@@ -73,19 +73,13 @@ function StickyPaymentBox({
             </p>
           </div>
           <div className="w-full min-w-[150px] max-w-[200px] min-h-[50px]">
-            {hasPayPalConfig ? (
-              <PayPalButtonContent
-                key="sticky-payment-button"
-                amount={5}
-                currency={isUK ? 'GBP' : 'USD'}
-                onSuccess={onSuccess}
-                onError={onError}
-              />
-            ) : (
-              <div className="text-center p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                Payment unavailable
-              </div>
-            )}
+            <PayPalButtonContent
+              key="sticky-payment-button"
+              amount={5}
+              currency={isUK ? 'GBP' : 'USD'}
+              onSuccess={onSuccess}
+              onError={onError}
+            />
           </div>
         </div>
         {paymentError && (
@@ -378,12 +372,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const isImmediateThreat = displayResult.saturation_year < 2030
   const isMidTermThreat = displayResult.saturation_year >= 2030 && displayResult.saturation_year <= 2038
 
-  // Get client ID from environment variable - check if PayPal is configured
-  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID
+  // Get client ID from environment variable or use fallback for immediate functionality
+  // Note: For production, it's recommended to set NEXT_PUBLIC_PAYPAL_CLIENT_ID in Vercel
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
   const hasPayPalConfig = !!clientId
   
-  if (!hasPayPalConfig) {
-    console.error('❌ NEXT_PUBLIC_PAYPAL_CLIENT_ID is not set - payment buttons will be disabled')
+  if (process.env.NODE_ENV === 'development' && !process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID) {
+    console.warn('⚠️ NEXT_PUBLIC_PAYPAL_CLIENT_ID not set - using fallback. Set env var in production.')
   }
 
   // Detect mobile for PayPal configuration
@@ -554,20 +549,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
             )}
             
             <div className="w-full min-h-[50px]">
-              {hasPayPalConfig ? (
-                <PayPalButtonContent
-                  key="mobile-payment-button"
-                  amount={5}
-                  currency={isUK ? 'GBP' : 'USD'}
-                  onSuccess={handlePaymentSuccess}
-                  onError={handlePaymentError}
-                />
-              ) : (
-                <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800 font-medium mb-1">Payment temporarily unavailable</p>
-                  <p className="text-xs text-yellow-700">Please use the password unlock at the bottom of the page or contact support.</p>
-                </div>
-              )}
+              <PayPalButtonContent
+                key="mobile-payment-button"
+                amount={5}
+                currency={isUK ? 'GBP' : 'USD'}
+                onSuccess={handlePaymentSuccess}
+                onError={handlePaymentError}
+              />
             </div>
           </motion.div>
         </div>
@@ -844,20 +832,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
                 )}
                 
                 <div className="w-full min-h-[50px]">
-                  {hasPayPalConfig ? (
-                    <PayPalButtonContent
-                      key="desktop-overlay-payment-button"
-                      amount={5}
-                      currency={isUK ? 'GBP' : 'USD'}
-                      onSuccess={handlePaymentSuccess}
-                      onError={handlePaymentError}
-                    />
-                  ) : (
-                    <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-sm text-yellow-800 font-medium mb-1">Payment temporarily unavailable</p>
-                      <p className="text-xs text-yellow-700">Please use the password unlock at the bottom of the page or contact support.</p>
-                    </div>
-                  )}
+                  <PayPalButtonContent
+                    key="desktop-overlay-payment-button"
+                    amount={5}
+                    currency={isUK ? 'GBP' : 'USD'}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
                 </div>
               </motion.div>
             </div>
