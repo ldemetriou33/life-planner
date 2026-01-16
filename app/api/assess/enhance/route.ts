@@ -54,9 +54,11 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log('🤖 Using Gemini AI for enhancement...');
-    console.log('University:', university);
-    console.log('Major:', major);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🤖 Using Gemini AI for enhancement...');
+          console.log('University:', university);
+          console.log('Major:', major);
+        }
     
     try {
       // Use gemini-2.5-flash (latest fast model with schema support)
@@ -112,9 +114,11 @@ export async function POST(req: Request) {
         );
       }
       
-      console.log('✅ Gemini AI successfully generated enhanced assessment');
-      console.log('Score:', data.singularity_score);
-      console.log('Verdict:', data.verdict);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Gemini AI successfully generated enhanced assessment');
+            console.log('Score:', data.singularity_score);
+            console.log('Verdict:', data.verdict);
+          }
       
       // Save assessment for statistics (non-blocking)
       saveAssessment(data.singularity_score, major, university).catch(err => console.error('Assessment save failed:', err));

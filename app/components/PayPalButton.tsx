@@ -64,7 +64,9 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
       if (isMobile) {
         const timer = setTimeout(() => {
           setSdkReady(true)
-          console.log('✅ PayPal SDK ready on mobile')
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ PayPal SDK ready on mobile')
+          }
         }, 500) // Reduced delay - 500ms should be enough
         return () => clearTimeout(timer)
       } else {
@@ -83,9 +85,13 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         const paypal = (window as any).paypal
         if (paypal) {
           setSdkVerified(true)
-          console.log('✅ PayPal SDK verified - window.paypal exists')
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ PayPal SDK verified - window.paypal exists')
+          }
         } else {
-          console.warn('⚠️ window.paypal not found (but SDK is resolved)')
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('⚠️ window.paypal not found (but SDK is resolved)')
+          }
           // Don't block - verification is optional
           setSdkVerified(false)
         }
@@ -104,7 +110,9 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   useEffect(() => {
     if (isResolved && !isPending && !isRejected && !sdkReady) {
       const fallbackTimer = setTimeout(() => {
-        console.warn('⚠️ SDK ready timeout - forcing ready state')
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠️ SDK ready timeout - forcing ready state')
+        }
         setSdkReady(true)
       }, 3000) // 3 second fallback
       return () => clearTimeout(fallbackTimer)
@@ -141,16 +149,6 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   const isSdkFullyReady = isResolved && !isPending && !isRejected && sdkReady
   
   if (!isSdkFullyReady) {
-    // Visual debugging: Show SDK state
-    const sdkState = {
-      isResolved,
-      isPending,
-      isRejected,
-      sdkReady,
-      sdkVerified,
-      timestamp: new Date().toLocaleTimeString()
-    }
-    
     // On mobile, wait a bit longer to ensure SDK is fully ready
     if (isMobile) {
       return (
@@ -187,15 +185,15 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     // Ensure currency is valid and matches provider configuration
     const validCurrency = currency === 'GBP' || currency === 'USD' ? currency : 'USD'
     
-    console.log('🔵 createOrder called', {
-      amount,
-      currency: validCurrency,
-      originalCurrency: currency,
-      isMobile,
-      timestamp: new Date().toISOString(),
-      // Log to verify currency matches provider
-      note: 'Currency must match PayPalScriptProvider currency option'
-    })
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔵 createOrder called', {
+        amount,
+        currency: validCurrency,
+        originalCurrency: currency,
+        isMobile,
+        timestamp: new Date().toISOString(),
+      })
+    }
     
     // Verify currency is valid before creating order
     if (validCurrency !== 'GBP' && validCurrency !== 'USD') {
@@ -246,48 +244,54 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         throw new Error('Payment system error. Please refresh and try again.')
       }
 
-      // Skip order.get() check on mobile - it can cause issues
-      // The order ID is already in data.orderID, so we can proceed directly to capture
-      if (!isMobile) {
-        // Only do order.get() check on desktop for debugging
-        try {
-          if (actions.order.get) {
-            const orderDetails = await actions.order.get()
-            console.log('Order details retrieved:', orderDetails?.id)
+          // Skip order.get() check on mobile - it can cause issues
+          // The order ID is already in data.orderID, so we can proceed directly to capture
+          if (!isMobile && process.env.NODE_ENV === 'development') {
+            // Only do order.get() check on desktop for debugging
+            try {
+              if (actions.order.get) {
+                const orderDetails = await actions.order.get()
+                console.log('Order details retrieved:', orderDetails?.id)
+              }
+            } catch (getError: any) {
+              console.warn('Failed to get order details (non-critical):', getError)
+              // Continue anyway - capture might still work
+            }
           }
-        } catch (getError: any) {
-          console.warn('Failed to get order details (non-critical):', getError)
-          // Continue anyway - capture might still work
-        }
-      }
 
-      // Capture order with retry logic for mobile network issues
-      let order
-      let retries = 0
-      const maxRetries = isMobile ? 2 : 3 // Fewer retries on mobile to fail faster
-      const timeout = isMobile ? 20000 : 10000 // Longer timeout for mobile (20s)
-      
-      console.log('Starting order capture...', { isMobile, maxRetries, timeout })
+          // Capture order with retry logic for mobile network issues
+          let order
+          let retries = 0
+          const maxRetries = isMobile ? 2 : 3 // Fewer retries on mobile to fail faster
+          const timeout = isMobile ? 20000 : 10000 // Longer timeout for mobile (20s)
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Starting order capture...', { isMobile, maxRetries, timeout })
+          }
       
       while (retries < maxRetries) {
         try {
           // For mobile, use simpler capture without timeout race (can cause issues)
           if (isMobile) {
-            // Direct capture on mobile - simpler is better
-            order = await actions.order.capture()
-            console.log(`✅ Payment captured successfully on mobile (attempt ${retries + 1})`)
-            break // Success, exit retry loop
-          } else {
-            // Desktop: use timeout wrapper
-            const capturePromise = actions.order.capture()
-            const timeoutPromise = new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Capture timeout')), timeout)
-            )
-            
-            order = await Promise.race([capturePromise, timeoutPromise]) as any
-            console.log(`✅ Payment captured successfully on desktop (attempt ${retries + 1})`)
-            break // Success, exit retry loop
-          }
+              // Direct capture on mobile - simpler is better
+                order = await actions.order.capture()
+                if (process.env.NODE_ENV === 'development') {
+                  console.log(`✅ Payment captured successfully on mobile (attempt ${retries + 1})`)
+                }
+                break // Success, exit retry loop
+              } else {
+                // Desktop: use timeout wrapper
+                const capturePromise = actions.order.capture()
+                const timeoutPromise = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Capture timeout')), timeout)
+                )
+                
+                order = await Promise.race([capturePromise, timeoutPromise]) as any
+                if (process.env.NODE_ENV === 'development') {
+                  console.log(`✅ Payment captured successfully on desktop (attempt ${retries + 1})`)
+                }
+                break // Success, exit retry loop
+              }
         } catch (captureError: any) {
           const errorMsg = captureError?.message || String(captureError)
           const errorCode = captureError?.code || ''
@@ -311,7 +315,9 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
           if (isRetryable && retries < maxRetries - 1) {
             retries++
             const backoffDelay = isMobile ? 2000 * retries : 1000 * retries // Longer backoff on mobile
-            console.log(`Retrying in ${backoffDelay}ms...`)
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Retrying in ${backoffDelay}ms...`)
+            }
             await new Promise(resolve => setTimeout(resolve, backoffDelay))
             continue
           }
@@ -325,15 +331,19 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
         throw new Error('Failed to capture order after all retry attempts')
       }
       
-      console.log('Order captured:', {
-        orderID: order.id,
-        status: order.status,
-        isMobile
-      })
-      
-      // Payment successful
-      if (order.status === 'COMPLETED') {
-        console.log('✅ Payment completed successfully:', order.id)
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Order captured:', {
+              orderID: order.id,
+              status: order.status,
+              isMobile
+            })
+          }
+          
+          // Payment successful
+          if (order.status === 'COMPLETED') {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('✅ Payment completed successfully:', order.id)
+            }
         
         // Store payment in localStorage (only on client side)
         if (typeof window !== 'undefined') {
@@ -341,10 +351,12 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
             localStorage.setItem('premium_unlocked', 'true')
             localStorage.setItem('payment_id', order.id)
             localStorage.setItem('payment_timestamp', Date.now().toString())
-          } catch (storageError) {
-            console.warn('Failed to save payment to localStorage:', storageError)
-            // Don't fail payment if localStorage fails
-          }
+              } catch (storageError) {
+                if (process.env.NODE_ENV === 'development') {
+                  console.warn('Failed to save payment to localStorage:', storageError)
+                }
+                // Don't fail payment if localStorage fails
+              }
         }
         
         onSuccess()
@@ -429,7 +441,9 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
   }
 
   const onCancel = () => {
-    console.log('Payment cancelled by user')
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Payment cancelled by user')
+    }
     setIsProcessing(false)
     setHasError(false) // Reset error state on cancel
     // Don't call onError for cancellations - it's user-initiated
@@ -498,7 +512,7 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
       )}
       
       {/* Single PayPal Buttons component - PayPal automatically shows Apple Pay when available */}
-      {(() => {
+      {process.env.NODE_ENV === 'development' && (() => {
         // Debug logging when buttons are rendered
         console.log('🟢 PayPal buttons rendered', {
           isResolved,
@@ -536,7 +550,9 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              console.log('⚠️ Button click blocked - SDK not ready')
+              if (process.env.NODE_ENV === 'development') {
+                console.log('⚠️ Button click blocked - SDK not ready')
+              }
             }}
           />
         )}

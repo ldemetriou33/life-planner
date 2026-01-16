@@ -107,9 +107,9 @@ interface ResultViewProps {
   major: string
 }
 
-// Password for free access
-const FREE_ACCESS_PASSWORD = process.env.NEXT_PUBLIC_FREE_ACCESS_PASSWORD || 'demo2024'
-const UNI_PASSWORD = 'uni' // Special password for bottom unlock
+// Passwords for free access - require environment variables in production
+const FREE_ACCESS_PASSWORD = process.env.NEXT_PUBLIC_FREE_ACCESS_PASSWORD
+const UNI_PASSWORD = process.env.NEXT_PUBLIC_UNI_PASSWORD // Special password for bottom unlock
 
 export default function ResultView({ result, university, major }: ResultViewProps) {
   const [isPremium, setIsPremium] = useState(false)
@@ -317,7 +317,14 @@ export default function ResultView({ result, university, major }: ResultViewProp
     e.preventDefault()
     setPasswordError(null)
     
-    if (password === FREE_ACCESS_PASSWORD || password === UNI_PASSWORD) {
+    // Check if passwords are configured
+    const validPasswords = [FREE_ACCESS_PASSWORD, UNI_PASSWORD].filter(Boolean)
+    if (validPasswords.length === 0) {
+      setPasswordError('Password access is not available')
+      return
+    }
+    
+    if (validPasswords.includes(password)) {
       setIsPremium(true) // Reveal offline preset immediately
       if (typeof window !== 'undefined') {
         localStorage.setItem('premium_unlocked', 'true')
@@ -337,6 +344,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
     const input = e.currentTarget.querySelector('input') as HTMLInputElement
     const enteredPassword = input?.value || ''
     
+    // Check if UNI password is configured
+    if (!UNI_PASSWORD) {
+      // Password not configured - silently fail (don't show error to users)
+      input.value = ''
+      return
+    }
+    
     if (enteredPassword === UNI_PASSWORD) {
       setIsPremium(true) // Reveal offline preset immediately
       if (typeof window !== 'undefined') {
@@ -346,6 +360,9 @@ export default function ResultView({ result, university, major }: ResultViewProp
       
       // Call Gemini enhancement in background
       enhanceWithGemini()
+    } else {
+      // Incorrect password - clear input silently
+      input.value = ''
     }
   }
 
@@ -353,8 +370,19 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const isImmediateThreat = displayResult.saturation_year < 2030
   const isMidTermThreat = displayResult.saturation_year >= 2030 && displayResult.saturation_year <= 2038
 
-  // Get client ID from environment variable or use fallback
-  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'ARN5klFaEsIMllSuqWN-fxKKuB1i-mk9TvKWW0hB6WVFAK05soxvKRNyJnFrhkGUox1Ib0-RLtkFvNvm'
+  // Get client ID from environment variable - required for production
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID
+  if (!clientId) {
+    console.error('❌ NEXT_PUBLIC_PAYPAL_CLIENT_ID is not set')
+    return (
+      <div className="w-full max-w-6xl mx-auto p-8 text-center">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h2 className="text-xl font-bold text-red-600 mb-2">Payment System Error</h2>
+          <p className="text-red-700">Payment system is not configured. Please contact support.</p>
+        </div>
+      </div>
+    )
+  }
 
   // Detect mobile for PayPal configuration
   const [isMobileDevice, setIsMobileDevice] = useState(false)
@@ -384,13 +412,14 @@ export default function ResultView({ result, university, major }: ResultViewProp
       intent: 'capture' as const,
     }
     
-    console.log('PayPal provider options:', { 
-      currency, 
-      isUK, 
-      clientId: clientId?.substring(0, 10) + '...',
-      // Log to verify currency is being set
-      optionsCurrency: options.currency
-    })
+    if (process.env.NODE_ENV === 'development') {
+      console.log('PayPal provider options:', { 
+        currency, 
+        isUK, 
+        clientId: clientId?.substring(0, 10) + '...',
+        optionsCurrency: options.currency
+      })
+    }
     
     return options
   }, [isUK, clientId])

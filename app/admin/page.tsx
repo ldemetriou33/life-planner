@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, Download, RefreshCw } from 'lucide-react'
+import { Mail, Download, RefreshCw, Lock } from 'lucide-react'
 
 interface EmailEntry {
   email: string
@@ -11,10 +11,16 @@ interface EmailEntry {
   timestamp: string
 }
 
+// Admin password from environment variable
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD
+
 export default function AdminPage() {
   const [emails, setEmails] = useState<EmailEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [password, setPassword] = useState('')
+  const [passwordError, setPasswordError] = useState<string | null>(null)
 
   const fetchEmails = async () => {
     setIsLoading(true)
@@ -36,9 +42,39 @@ export default function AdminPage() {
     }
   }
 
+  // Check authentication on mount
   useEffect(() => {
-    fetchEmails()
+    if (typeof window !== 'undefined') {
+      const savedAuth = sessionStorage.getItem('admin_authenticated')
+      if (savedAuth === 'true' && ADMIN_PASSWORD) {
+        setIsAuthenticated(true)
+        fetchEmails()
+      } else {
+        setIsLoading(false)
+      }
+    }
   }, [])
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError(null)
+    
+    if (!ADMIN_PASSWORD) {
+      setPasswordError('Admin access is not configured')
+      return
+    }
+    
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true)
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('admin_authenticated', 'true')
+      }
+      setPassword('')
+      fetchEmails()
+    } else {
+      setPasswordError('Incorrect password')
+    }
+  }
 
   const downloadCSV = () => {
     const headers = ['Email', 'University', 'Major', 'Timestamp']
@@ -61,6 +97,58 @@ export default function AdminPage() {
     link.download = `emails-${new Date().toISOString().split('T')[0]}.csv`
     link.click()
     URL.revokeObjectURL(url)
+  }
+
+  // Show password prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <main className="min-h-screen bg-white px-4 py-12 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="max-w-md w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="backdrop-blur-xl bg-white/90 border border-gray-200 rounded-lg p-8"
+          >
+            <div className="text-center mb-6">
+              <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Access</h1>
+              <p className="text-gray-600">Enter password to access admin panel</p>
+            </div>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    setPasswordError(null)
+                  }}
+                  placeholder="Enter admin password"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-electric-blue/30 focus:border-electric-blue"
+                  autoFocus
+                />
+                {passwordError && (
+                  <p className="text-sm text-red-500 mt-2">{passwordError}</p>
+                )}
+              </div>
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full py-3 px-4 bg-gradient-to-r from-electric-blue to-neon-purple text-white rounded-lg font-semibold"
+              >
+                Access Admin Panel
+              </motion.button>
+            </form>
+            {!ADMIN_PASSWORD && (
+              <p className="text-xs text-gray-500 text-center mt-4">
+                Admin password not configured. Set NEXT_PUBLIC_ADMIN_PASSWORD environment variable.
+              </p>
+            )}
+          </motion.div>
+        </div>
+      </main>
+    )
   }
 
   return (

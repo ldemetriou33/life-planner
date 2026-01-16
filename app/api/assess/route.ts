@@ -11,6 +11,7 @@ const genAI = geminiApiKey
   : null;
 
 // Log Gemini status on server startup (only in development)
+// Note: This runs at module load, so it only logs once per server restart
 if (process.env.NODE_ENV === 'development') {
   if (genAI) {
     console.log('✅ Gemini AI is configured and ready');
@@ -355,9 +356,11 @@ export async function POST(req: Request) {
       _source: 'offline-preset' // Internal flag to track AI vs preset
     };
 
-    console.log('📋 Using offline preset system (instant response)');
-    console.log('Score:', offlineData.singularity_score);
-    console.log('Verdict:', offlineData.verdict);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📋 Using offline preset system (instant response)');
+          console.log('Score:', offlineData.singularity_score);
+          console.log('Verdict:', offlineData.verdict);
+        }
     
     // Return immediately - no delays
     return NextResponse.json(offlineData);
