@@ -435,6 +435,50 @@ export default function ResultView({ result, university, major }: ResultViewProp
   // Include currency, clientId, and mobile status to ensure proper reload
   const paypalProviderKey = `paypal-${isUK ? 'GBP' : 'USD'}-${clientId?.substring(0, 10)}-${isMobileDevice ? 'mobile' : 'desktop'}`
 
+  // On mobile, add a small delay to ensure currency is properly set before loading script
+  // This prevents script from loading with wrong currency
+  useEffect(() => {
+    if (isMounted && hasPayPalConfig) {
+      // Small delay on mobile to ensure currency detection is complete
+      if (isMobileDevice) {
+        const timer = setTimeout(() => {
+          setScriptReady(true)
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Mobile PayPal script ready with currency:', isUK ? 'GBP' : 'USD')
+          }
+        }, 100)
+        return () => clearTimeout(timer)
+      } else {
+        setScriptReady(true)
+      }
+    }
+  }, [isMounted, hasPayPalConfig, isMobileDevice, isUK])
+
+  // Verify script tag includes currency after load
+  useEffect(() => {
+    if (scriptReady && isMounted && typeof window !== 'undefined') {
+      const checkScriptTag = () => {
+        const scripts = document.querySelectorAll('script[src*="paypal.com/sdk/js"]')
+        scripts.forEach((script) => {
+          const src = script.getAttribute('src') || ''
+          const currency = isUK ? 'GBP' : 'USD'
+          if (src.includes(`currency=${currency}`)) {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('✅ PayPal script tag includes currency:', currency, src)
+            }
+          } else {
+            console.warn('⚠️ PayPal script tag missing currency parameter:', src, 'Expected:', currency)
+          }
+        })
+      }
+      
+      // Check immediately and after a delay
+      checkScriptTag()
+      const timer = setTimeout(checkScriptTag, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [scriptReady, isMounted, isUK])
+
   // Check if we're on client side (more efficient than useEffect)
   // This prevents SSR/client mismatches and double initialization in Strict Mode
   const isMounted = typeof window !== 'undefined'
@@ -892,6 +936,18 @@ export default function ResultView({ result, university, major }: ResultViewProp
   // This allows content to render immediately while PayPal loads
   // Key prop forces provider to reload when currency changes
   if (isMounted && hasPayPalConfig) {
+    if (!scriptReady && isMobileDevice) {
+      // Show loading state on mobile while waiting for currency detection
+      return (
+        <>
+          {content}
+          <div className="fixed bottom-0 left-0 right-0 p-2 bg-yellow-50 border-t border-yellow-200 text-center text-xs text-yellow-800 z-50">
+            Initializing payment system...
+          </div>
+        </>
+      )
+    }
+    
     return (
       <PayPalScriptProvider 
         key={paypalProviderKey} // Force reload when currency changes
