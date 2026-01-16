@@ -19,7 +19,8 @@ function StickyPaymentBox({
   isUK, 
   paymentError, 
   onSuccess, 
-  onError
+  onError,
+  hasPayPalConfig
 }: {
   triggerRef: React.RefObject<HTMLDivElement>
   isImmediateThreat: boolean
@@ -28,6 +29,7 @@ function StickyPaymentBox({
   paymentError: string | null
   onSuccess: () => void
   onError: (error: string) => void
+  hasPayPalConfig: boolean
 }) {
   const [isSticky, setIsSticky] = useState(false)
 
@@ -71,13 +73,19 @@ function StickyPaymentBox({
             </p>
           </div>
           <div className="w-full min-w-[150px] max-w-[200px] min-h-[50px]">
-            <PayPalButtonContent
-              key="sticky-payment-button"
-              amount={5}
-              currency={isUK ? 'GBP' : 'USD'}
-              onSuccess={onSuccess}
-              onError={onError}
-            />
+            {hasPayPalConfig ? (
+              <PayPalButtonContent
+                key="sticky-payment-button"
+                amount={5}
+                currency={isUK ? 'GBP' : 'USD'}
+                onSuccess={onSuccess}
+                onError={onError}
+              />
+            ) : (
+              <div className="text-center p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                Payment unavailable
+              </div>
+            )}
           </div>
         </div>
         {paymentError && (
@@ -370,18 +378,12 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const isImmediateThreat = displayResult.saturation_year < 2030
   const isMidTermThreat = displayResult.saturation_year >= 2030 && displayResult.saturation_year <= 2038
 
-  // Get client ID from environment variable - required for production
+  // Get client ID from environment variable - check if PayPal is configured
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID
-  if (!clientId) {
-    console.error('❌ NEXT_PUBLIC_PAYPAL_CLIENT_ID is not set')
-    return (
-      <div className="w-full max-w-6xl mx-auto p-8 text-center">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-red-600 mb-2">Payment System Error</h2>
-          <p className="text-red-700">Payment system is not configured. Please contact support.</p>
-        </div>
-      </div>
-    )
+  const hasPayPalConfig = !!clientId
+  
+  if (!hasPayPalConfig) {
+    console.error('❌ NEXT_PUBLIC_PAYPAL_CLIENT_ID is not set - payment buttons will be disabled')
   }
 
   // Detect mobile for PayPal configuration
@@ -552,13 +554,20 @@ export default function ResultView({ result, university, major }: ResultViewProp
             )}
             
             <div className="w-full min-h-[50px]">
-              <PayPalButtonContent
-                key="mobile-payment-button"
-                amount={5}
-                currency={isUK ? 'GBP' : 'USD'}
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-              />
+              {hasPayPalConfig ? (
+                <PayPalButtonContent
+                  key="mobile-payment-button"
+                  amount={5}
+                  currency={isUK ? 'GBP' : 'USD'}
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                />
+              ) : (
+                <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800 font-medium mb-1">Payment temporarily unavailable</p>
+                  <p className="text-xs text-yellow-700">Please use the password unlock at the bottom of the page or contact support.</p>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
@@ -574,6 +583,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
           paymentError={paymentError}
           onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
+          hasPayPalConfig={hasPayPalConfig}
         />
       )}
 
@@ -834,13 +844,20 @@ export default function ResultView({ result, university, major }: ResultViewProp
                 )}
                 
                 <div className="w-full min-h-[50px]">
-                  <PayPalButtonContent
-                    key="desktop-overlay-payment-button"
-                    amount={5}
-                    currency={isUK ? 'GBP' : 'USD'}
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
-                  />
+                  {hasPayPalConfig ? (
+                    <PayPalButtonContent
+                      key="desktop-overlay-payment-button"
+                      amount={5}
+                      currency={isUK ? 'GBP' : 'USD'}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                    />
+                  ) : (
+                    <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-800 font-medium mb-1">Payment temporarily unavailable</p>
+                      <p className="text-xs text-yellow-700">Please use the password unlock at the bottom of the page or contact support.</p>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </div>
@@ -879,10 +896,10 @@ export default function ResultView({ result, university, major }: ResultViewProp
     </>
   )
 
-  // Conditionally wrap with PayPal provider only when mounted
+  // Conditionally wrap with PayPal provider only when mounted and PayPal is configured
   // This allows content to render immediately while PayPal loads
   // Key prop forces provider to reload when currency changes
-  if (isMounted) {
+  if (isMounted && hasPayPalConfig) {
     return (
       <PayPalScriptProvider 
         key={paypalProviderKey} // Force reload when currency changes
@@ -893,7 +910,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
     )
   }
 
-  // On server-side, render content without PayPal provider
+  // On server-side or if PayPal not configured, render content without PayPal provider
   return content
 }
 
