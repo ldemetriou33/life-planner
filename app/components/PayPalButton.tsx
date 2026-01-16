@@ -557,23 +557,25 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
           />
         )}
         
-        <PayPalButtons
-          createOrder={createOrder}
-          onApprove={onApprove}
-          onError={onErrorHandler}
-          onCancel={onCancel}
-          style={{
-            // Use horizontal layout on mobile for better touch targets
-            layout: isMobile ? 'horizontal' : 'vertical',
-            color: 'gold',
-            shape: 'rect',
-            label: 'pay',
-            height: safeButtonHeight,
-            tagline: false,
-          }}
-          // Let PayPal automatically choose redirect on mobile (more reliable than popup)
-          forceReRender={[amount, currency, hasError, isMobile, sdkReady, isSdkFullyReady]}
-        />
+          <PayPalButtons
+            createOrder={createOrder}
+            onApprove={onApprove}
+            onError={onErrorHandler}
+            onCancel={onCancel}
+            style={{
+              // Use horizontal layout on mobile for better touch targets
+              layout: isMobile ? 'horizontal' : 'vertical',
+              color: 'gold',
+              shape: 'rect',
+              label: 'pay',
+              height: safeButtonHeight,
+              tagline: false,
+            }}
+            // Enable card payments on mobile and desktop
+            fundingSource={undefined} // Let PayPal choose (will show card if enabled in provider)
+            // Let PayPal automatically choose redirect on mobile (more reliable than popup)
+            forceReRender={[amount, currency, hasError, isMobile, sdkReady, isSdkFullyReady]}
+          />
       </div>
     </div>
   )

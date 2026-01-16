@@ -407,6 +407,10 @@ export default function ResultView({ result, university, major }: ResultViewProp
       clientId,
       currency: currency, // This should automatically add ?currency=GBP to script URL
       intent: 'capture' as const,
+      // Enable card payments on mobile and desktop
+      enableFunding: 'card,paylater',
+      // Ensure components are loaded for card payments
+      components: 'buttons,messages,funding-eligibility',
     }
     
     if (process.env.NODE_ENV === 'development') {
@@ -414,12 +418,14 @@ export default function ResultView({ result, university, major }: ResultViewProp
         currency, 
         isUK, 
         clientId: clientId?.substring(0, 10) + '...',
-        optionsCurrency: options.currency
+        optionsCurrency: options.currency,
+        enableFunding: options.enableFunding,
+        isMobileDevice
       })
     }
     
     return options
-  }, [isUK, clientId])
+  }, [isUK, clientId, isMobileDevice])
   
   // Create a key that changes with currency to force provider reload
   const paypalProviderKey = `paypal-${isUK ? 'GBP' : 'USD'}-${clientId?.substring(0, 10)}`
