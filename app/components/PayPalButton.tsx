@@ -192,16 +192,25 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
       currency: validCurrency,
       originalCurrency: currency,
       isMobile,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      // Log to verify currency matches provider
+      note: 'Currency must match PayPalScriptProvider currency option'
     })
     
+    // Verify currency is valid before creating order
+    if (validCurrency !== 'GBP' && validCurrency !== 'USD') {
+      console.error('❌ Invalid currency:', validCurrency)
+      return Promise.reject(new Error(`Invalid currency: ${validCurrency}. Must be GBP or USD.`))
+    }
+    
     // Create order with validated currency
+    // PayPal SDK will validate this matches the script tag currency
     return actions.order.create({
       purchase_units: [
         {
           amount: {
             value: amount.toString(),
-            currency_code: validCurrency, // Use validated currency
+            currency_code: validCurrency, // Use validated currency - must match provider
           },
           description: 'Unlock Premium Career Assessment Report',
         },

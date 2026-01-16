@@ -373,20 +373,30 @@ export default function ResultView({ result, university, major }: ResultViewProp
   }, [])
 
   // Memoize PayPal provider options - ensure currency matches createOrder
+  // Currency MUST be in options for PayPal to include it in script tag URL
   const paypalOptions = useMemo(() => {
     // Currency must match what we use in createOrder
     const currency = isUK ? 'GBP' : 'USD'
     
     const options: any = {
       clientId,
-      currency: currency, // Explicitly set currency to match createOrder
+      currency: currency, // This should automatically add ?currency=GBP to script URL
       intent: 'capture' as const,
     }
     
-    console.log('PayPal provider options:', { currency, isUK, clientId: clientId?.substring(0, 10) + '...' })
+    console.log('PayPal provider options:', { 
+      currency, 
+      isUK, 
+      clientId: clientId?.substring(0, 10) + '...',
+      // Log to verify currency is being set
+      optionsCurrency: options.currency
+    })
     
     return options
   }, [isUK, clientId])
+  
+  // Create a key that changes with currency to force provider reload
+  const paypalProviderKey = `paypal-${isUK ? 'GBP' : 'USD'}-${clientId?.substring(0, 10)}`
 
   // Check if we're on client side (more efficient than useEffect)
   // This prevents SSR/client mismatches and double initialization in Strict Mode
@@ -842,9 +852,13 @@ export default function ResultView({ result, university, major }: ResultViewProp
 
   // Conditionally wrap with PayPal provider only when mounted
   // This allows content to render immediately while PayPal loads
+  // Key prop forces provider to reload when currency changes
   if (isMounted) {
     return (
-      <PayPalScriptProvider options={paypalOptions}>
+      <PayPalScriptProvider 
+        key={paypalProviderKey} // Force reload when currency changes
+        options={paypalOptions}
+      >
         {content}
       </PayPalScriptProvider>
     )
