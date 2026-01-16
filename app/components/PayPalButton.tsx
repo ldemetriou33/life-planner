@@ -185,35 +185,60 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
     // Ensure currency is valid and matches provider configuration
     const validCurrency = currency === 'GBP' || currency === 'USD' ? currency : 'USD'
     
-    if (process.env.NODE_ENV === 'development') {
+    // Enhanced logging for mobile debugging
+    if (process.env.NODE_ENV === 'development' || isMobile) {
       console.log('🔵 createOrder called', {
         amount,
         currency: validCurrency,
         originalCurrency: currency,
         isMobile,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
         timestamp: new Date().toISOString(),
+        // Log to verify currency matches provider
+        note: 'Currency must match PayPalScriptProvider currency option in script tag URL'
       })
     }
     
     // Verify currency is valid before creating order
     if (validCurrency !== 'GBP' && validCurrency !== 'USD') {
-      console.error('❌ Invalid currency:', validCurrency)
-      return Promise.reject(new Error(`Invalid currency: ${validCurrency}. Must be GBP or USD.`))
+      const errorMsg = `Invalid currency: ${validCurrency}. Must be GBP or USD.`
+      console.error('❌ Invalid currency:', validCurrency, { isMobile, currency, originalCurrency: currency })
+      return Promise.reject(new Error(errorMsg))
+    }
+    
+    // Verify actions and order.create exist
+    if (!actions || !actions.order || !actions.order.create) {
+      const errorMsg = 'PayPal actions.order.create is not available'
+      console.error('❌ PayPal actions missing:', { isMobile, hasActions: !!actions, hasOrder: !!(actions?.order), hasCreate: !!(actions?.order?.create) })
+      return Promise.reject(new Error(errorMsg))
     }
     
     // Create order with validated currency
     // PayPal SDK will validate this matches the script tag currency
-    return actions.order.create({
-      purchase_units: [
-        {
-          amount: {
-            value: amount.toString(),
-            currency_code: validCurrency, // Use validated currency - must match provider
+    try {
+      return actions.order.create({
+        purchase_units: [
+          {
+            amount: {
+              value: amount.toString(),
+              currency_code: validCurrency, // Use validated currency - must match provider
+            },
+            description: 'Unlock Premium Career Assessment Report',
           },
-          description: 'Unlock Premium Career Assessment Report',
-        },
-      ],
-    })
+        ],
+      })
+    } catch (error: any) {
+      // Enhanced error logging for mobile
+      const errorMsg = error?.message || String(error)
+      console.error('❌ createOrder failed:', {
+        error: errorMsg,
+        currency: validCurrency,
+        isMobile,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+        timestamp: new Date().toISOString()
+      })
+      return Promise.reject(error)
+    }
   }
 
   const onApprove = async (data: any, actions: any) => {
