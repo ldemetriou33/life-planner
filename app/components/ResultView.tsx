@@ -483,10 +483,6 @@ export default function ResultView({ result, university, major }: ResultViewProp
     }
   }, [scriptReady, isMounted, isUK])
 
-  // Check if we're on client side (more efficient than useEffect)
-  // This prevents SSR/client mismatches and double initialization in Strict Mode
-  const isMounted = typeof window !== 'undefined'
-
   // Render all content immediately, only conditionally render PayPal provider
   // This way users see their results instantly while PayPal loads in background
   const content = (
