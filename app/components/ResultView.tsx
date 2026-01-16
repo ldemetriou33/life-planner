@@ -122,6 +122,7 @@ export default function ResultView({ result, university, major }: ResultViewProp
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [enhancedResult, setEnhancedResult] = useState<SingularityResult | null>(null)
   const [isEnhancing, setIsEnhancing] = useState(false)
+  const [scriptReady, setScriptReady] = useState(false) // State for mobile script loading
   const foundUniversity = findUniversity(university)
   const triggerRef = useRef<HTMLDivElement>(null)
 
@@ -411,6 +412,8 @@ export default function ResultView({ result, university, major }: ResultViewProp
       enableFunding: 'card,paylater',
       // Ensure components are loaded for card payments
       components: 'buttons,messages,funding-eligibility',
+      // Force script tag to include currency - use dataNamespace to ensure proper script loading
+      dataNamespace: `paypal-${currency.toLowerCase()}`,
     }
     
     if (process.env.NODE_ENV === 'development') {
@@ -420,7 +423,8 @@ export default function ResultView({ result, university, major }: ResultViewProp
         clientId: clientId?.substring(0, 10) + '...',
         optionsCurrency: options.currency,
         enableFunding: options.enableFunding,
-        isMobileDevice
+        isMobileDevice,
+        dataNamespace: options.dataNamespace
       })
     }
     
@@ -428,7 +432,8 @@ export default function ResultView({ result, university, major }: ResultViewProp
   }, [isUK, clientId, isMobileDevice])
   
   // Create a key that changes with currency to force provider reload
-  const paypalProviderKey = `paypal-${isUK ? 'GBP' : 'USD'}-${clientId?.substring(0, 10)}`
+  // Include currency, clientId, and mobile status to ensure proper reload
+  const paypalProviderKey = `paypal-${isUK ? 'GBP' : 'USD'}-${clientId?.substring(0, 10)}-${isMobileDevice ? 'mobile' : 'desktop'}`
 
   // Check if we're on client side (more efficient than useEffect)
   // This prevents SSR/client mismatches and double initialization in Strict Mode

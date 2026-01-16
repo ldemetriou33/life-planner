@@ -182,6 +182,31 @@ export const PayPalButtonContent = memo(function PayPalButtonContent({ amount, c
 
   // Simplified createOrder - ensure currency matches provider
   const createOrder = (data: any, actions: any) => {
+    // Verify script tag includes currency before creating order
+    if (typeof window !== 'undefined') {
+      const scripts = document.querySelectorAll('script[src*="paypal.com/sdk/js"]')
+      let scriptHasCurrency = false
+      const expectedCurrency = currency === 'GBP' || currency === 'USD' ? currency : 'USD'
+      
+      scripts.forEach((script) => {
+        const src = script.getAttribute('src') || ''
+        if (src.includes(`currency=${expectedCurrency}`)) {
+          scriptHasCurrency = true
+        }
+      })
+      
+      if (!scriptHasCurrency && scripts.length > 0) {
+        // Script tag exists but doesn't have currency - this is the problem
+        const errorMsg = `PayPal script tag missing currency parameter. Expected currency=${expectedCurrency} in script URL.`
+        console.error('❌ Script tag verification failed:', {
+          expectedCurrency,
+          scriptSrcs: Array.from(scripts).map(s => s.getAttribute('src')),
+          isMobile
+        })
+        return Promise.reject(new Error(errorMsg))
+      }
+    }
+    
     // Ensure currency is valid and matches provider configuration
     const validCurrency = currency === 'GBP' || currency === 'USD' ? currency : 'USD'
     
