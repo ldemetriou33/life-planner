@@ -90,6 +90,9 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error calculating statistics:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error details:', error instanceof Error ? error.stack : String(error));
+    }
     return NextResponse.json(
       { error: 'Failed to calculate statistics' },
       { status: 500 }

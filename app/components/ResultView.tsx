@@ -146,7 +146,9 @@ export default function ResultView({ result, university, major }: ResultViewProp
       setIsUK(isUKLocale || isUKTimezone)
     } catch (error) {
       // Fallback to false if detection fails
-      console.warn('UK detection failed:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('UK detection failed:', error)
+      }
       setIsUK(false)
     }
   }, [])

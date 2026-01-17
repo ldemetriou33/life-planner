@@ -78,9 +78,11 @@ export async function saveEmail(email: string, university: string, major: string
     const supabaseClient = getSupabaseClient()
     if (supabaseClient) {
       try {
-        console.log('Attempting to save to Supabase...')
-        console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing')
-        console.log('Service Role Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Missing')
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Attempting to save to Supabase...')
+          console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing')
+          console.log('Service Role Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Missing')
+        }
         
         const { data, error } = await supabaseClient
           .from('emails')
@@ -89,29 +91,39 @@ export async function saveEmail(email: string, university: string, major: string
         
         if (error) {
           console.error('❌ Supabase error saving email:', error)
-          console.error('Error code:', error.code)
-          console.error('Error message:', error.message)
-          console.error('Error details:', JSON.stringify(error, null, 2))
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Error code:', error.code)
+            console.error('Error message:', error.message)
+            console.error('Error details:', JSON.stringify(error, null, 2))
+          }
           // Fall through to file storage
         } else {
-          console.log('✅ Email saved to Supabase successfully!')
-          console.log('Saved data:', data)
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Email saved to Supabase successfully!')
+            console.log('Saved data:', data)
+          }
           // Still send notification and log, but don't save to file if Supabase succeeds
           sendEmailNotification(newEntry)
           return // Successfully saved to Supabase
         }
       } catch (error) {
         console.error('❌ Exception saving to Supabase:', error)
-        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+        }
         // Fall through to file storage
       }
     } else {
-      console.log('⚠️ Supabase client is null')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ Supabase client is null')
+      }
     }
   } else {
-    console.log('⚠️ Supabase not configured - checking environment variables...')
-    console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing')
-    console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Missing')
+    if (process.env.NODE_ENV === 'development') {
+      console.log('⚠️ Supabase not configured - checking environment variables...')
+      console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing')
+      console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Missing')
+    }
   }
   
   // Fallback to file storage if Supabase not configured or failed
@@ -120,7 +132,9 @@ export async function saveEmail(email: string, university: string, major: string
     const emails = await getEmails()
     emails.push(newEntry)
     await fs.writeFile(EMAILS_FILE, JSON.stringify(emails, null, 2), 'utf-8')
-    console.log('Email saved to file:', newEntry)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Email saved to file:', newEntry)
+    }
   } catch (error) {
     console.error('Error saving email to file:', error)
   }
@@ -128,9 +142,11 @@ export async function saveEmail(email: string, university: string, major: string
   // Send email notification (bonus feature)
   sendEmailNotification(newEntry)
   
-  // Always log to console as final fallback
-  console.log('User email:', email)
-  console.log('Assessment request:', { email, university, major, timestamp: newEntry.timestamp })
+  // Always log to console as final fallback (useful for debugging in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('User email:', email)
+    console.log('Assessment request:', { email, university, major, timestamp: newEntry.timestamp })
+  }
 }
 
 // Helper function to send email notification
@@ -151,7 +167,9 @@ async function sendEmailNotification(entry: EmailEntry) {
           <p style="color: #666; font-size: 12px;">This is an automated notification from your Reality Check app.</p>
         `,
       })
-      console.log('Email notification sent to admin')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Email notification sent to admin')
+      }
     } catch (error) {
       console.error('Error sending email notification:', error)
       // Don't fail the request if email fails

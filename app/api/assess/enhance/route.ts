@@ -132,7 +132,9 @@ export async function POST(req: Request) {
       return NextResponse.json(aiGeneratedData);
     } catch (geminiError) {
       console.error("❌ Gemini Failed:", geminiError);
-      console.error("Error details:", geminiError instanceof Error ? geminiError.message : String(geminiError));
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error details:", geminiError instanceof Error ? geminiError.message : String(geminiError));
+      }
       return NextResponse.json(
         { error: "Gemini API failed", details: geminiError instanceof Error ? geminiError.message : String(geminiError) },
         { status: 500 }
